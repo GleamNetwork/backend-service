@@ -130,6 +130,25 @@ deepseek-v4-flash
 
 未配置 DeepSeek API Key 时，可使用本地 mock 模式进行演示和测试；生产环境必须配置真实密钥并通过机构安全评审。
 
+## 服务器后台启动
+
+推荐使用 systemd。仓库提供：
+
+- 服务模板：[`deploy/tongpin-backend.service`](deploy/tongpin-backend.service)
+- 完整部署说明：[`deploy/README.md`](deploy/README.md)
+
+最简流程：
+
+```bash
+cd /opt/HoldU/backend-service
+npm ci
+npm run build
+sudo cp deploy/tongpin-backend.service /etc/systemd/system/tongpin-backend.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now tongpin-backend
+sudo journalctl -u tongpin-backend -f
+```
+
 ## 子模块使用
 
 本目录是 HoldU 的 Git 子模块：

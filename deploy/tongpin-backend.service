@@ -1,0 +1,25 @@
+[Unit]
+Description=HoldU / Tongpin B2 backend service
+Documentation=https://github.com/GleamNetwork/backend-service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tongpin
+Group=tongpin
+WorkingDirectory=/opt/HoldU/backend-service
+Environment=NODE_ENV=production
+ExecStart=/usr/local/bin/node dist/main.js
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/HoldU/backend-service
+
+[Install]
+WantedBy=multi-user.target
