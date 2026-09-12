@@ -46,6 +46,41 @@ let AIController = class AIController {
             },
         });
     }
+    async chatStream(request, body, response) {
+        response.status(200).set({
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache, no-transform',
+            Connection: 'keep-alive',
+            'X-Accel-Buffering': 'no',
+        });
+        response.flushHeaders();
+        const send = (event, payload) => {
+            if (response.writableEnded)
+                return;
+            response.write('event: ' + event + '\n');
+            response.write('data: ' + JSON.stringify(payload) + '\n\n');
+        };
+        try {
+            const result = await this.ai.streamChatSuggestion({
+                requestedBy: request.auth?.userId ?? request.auth?.staffId ?? 'system',
+                userId: request.auth?.userId,
+                caseId: body?.case_id ?? null,
+                context: {
+                    main_request: body?.main_request ?? body?.free_text ?? null,
+                    current_safety: body?.current_safety ?? 'unknown',
+                    goal: body?.goal ?? 'empathetic_listening',
+                },
+                onDelta: (text) => send('delta', { text }),
+            });
+            send('done', result);
+        }
+        catch (error) {
+            send('error', { message: error instanceof Error ? error.message : '实时聊天失败，请稍后重试' });
+        }
+        finally {
+            response.end();
+        }
+    }
     async transferSummary(request, body) {
         const requestedBy = request.auth?.staffId;
         if (!requestedBy)
@@ -112,6 +147,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AIController.prototype, "chatSuggestion", null);
+__decorate([
+    (0, common_1.Post)('chat/stream'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AIController.prototype, "chatStream", null);
 __decorate([
     (0, common_1.Post)('transfer-summary'),
     __param(0, (0, common_1.Req)()),

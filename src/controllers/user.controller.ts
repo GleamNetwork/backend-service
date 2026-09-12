@@ -246,20 +246,118 @@ export class UserController {
   @Get('me/chat/messages')
   async listChat(@Req() request: Request) {
     const userId = await this.userId(request);
-    const rows = await this.database
-      .query('SELECT * FROM chat_messages WHERE user_id = ? ORDER BY created_at ASC LIMIT 200', [userId])
+    const chatRows = await this.database
+      .query(
+        `SELECT id, user_id, NULL AS case_id, sender_role, content, ai_assisted, created_at
+         FROM chat_messages
+         WHERE user_id = ?
+         ORDER BY created_at ASC
+         LIMIT 200`,
+        [userId],
+      )
       .then(([rows]) => rows as any[]);
-    return { items: rows };
+
+    const [caseRow] = await this.database
+      .query(
+        `SELECT id
+         FROM service_cases
+         WHERE user_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId],
+      )
+      .then(([rows]) => rows as any[]);
+    const caseRows = caseRow
+      ? await this.database
+          .query(
+            `SELECT id, case_id, sender_role, sender_id, content, ai_assisted, visibility_scope, created_at
+             FROM case_messages
+             WHERE case_id = ?
+             ORDER BY created_at ASC
+             LIMIT 200`,
+            [caseRow.id],
+          )
+          .then(([rows]) => rows as any[])
+      : [];
+
+    const items = [
+      ...chatRows,
+      ...caseRows.map((row: any) => ({
+        id: row.id,
+        user_id: userId,
+        case_id: row.case_id,
+        sender_role: row.sender_role,
+        sender_id: row.sender_id,
+        content: row.content,
+        ai_assisted: row.ai_assisted,
+        visibility_scope: row.visibility_scope,
+        created_at: row.created_at,
+      })),
+    ].sort((left: any, right: any) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime());
+
+    return { items: items.slice(-200) };
   }
 
   @Post('me/chat/messages')
   async sendChat(@Req() request: Request, @Body() body: any) {
     const userId = await this.userId(request);
+    const content = String(body?.content ?? '');
+    const [activeCase] = await this.database
+      .query(
+        `SELECT id, district_id, assigned_volunteer_id
+         FROM service_cases
+         WHERE user_id = ?
+           AND status IN ('waiting_assignment', 'in_progress', 'awaiting_transfer', 'professional_takeover_requested', 'professional_taken_over')
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId],
+      )
+      .then(([rows]) => rows as any[]);
+
+    if (activeCase) {
+      const id = uuid();
+      await this.database.execute(
+        `INSERT INTO case_messages
+         (id, case_id, sender_role, sender_id, content, ai_assisted, visibility_scope, created_at)
+         VALUES (?, ?, 'user', ?, ?, FALSE, 'case_participants', UTC_TIMESTAMP(6))`,
+        [id, activeCase.id, userId, content],
+      );
+      if (activeCase.assigned_volunteer_id) {
+        await this.events.publish({
+          eventType: 'case.message.created',
+          aggregateType: 'case',
+          aggregateId: activeCase.id,
+          audienceType: 'staff',
+          audienceId: activeCase.assigned_volunteer_id,
+          payload: { message_id: id, sender_role: 'user' },
+        });
+      } else {
+        await this.events.publish({
+          eventType: 'case.message.created',
+          aggregateType: 'case',
+          aggregateId: activeCase.id,
+          audienceType: 'district',
+          audienceId: activeCase.district_id,
+          payload: { message_id: id, sender_role: 'user' },
+        });
+      }
+      return {
+        id,
+        user_id: userId,
+        case_id: activeCase.id,
+        sender_role: 'user',
+        content,
+        ai_assisted: false,
+        created_at: new Date().toISOString(),
+        delivered: true,
+      };
+    }
+
     const id = uuid();
     await this.database.execute(
       `INSERT INTO chat_messages (id, user_id, sender_role, content, ai_assisted, created_at)
        VALUES (?, ?, 'user', ?, FALSE, UTC_TIMESTAMP(6))`,
-      [id, userId, String(body?.content ?? '')],
+      [id, userId, content],
     );
     await this.events.publish({
       eventType: 'user.chat.created',
@@ -269,7 +367,7 @@ export class UserController {
       audienceId: userId,
       payload: { message_id: id },
     });
-    return { id, user_id: userId, sender_role: 'user', content: body?.content, created_at: new Date().toISOString() };
+    return { id, user_id: userId, sender_role: 'user', content, created_at: new Date().toISOString(), delivered: true };
   }
 
   @Post('me/chat/needs')

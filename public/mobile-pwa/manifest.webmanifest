@@ -1,0 +1,16 @@
+{
+  "id": "./index.html",
+  "name": "同频 · 小频陪伴",
+  "short_name": "同频",
+  "description": "B2 CRISIS 情绪急救与数字陪伴的离线互动演示",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff8f5",
+  "theme_color": "#fff8f5",
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

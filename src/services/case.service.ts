@@ -141,6 +141,15 @@ export class CaseService {
         payload: { staff_id: staffId },
         connection,
       });
+      await this.events.publish({
+        eventType: 'case.assigned',
+        aggregateType: 'case',
+        aggregateId: caseId,
+        audienceType: 'user',
+        audienceId: row.user_id,
+        payload: { staff_id: staffId },
+        connection,
+      });
       await connection.commit();
       return { event_id: eventId, ...(await this.getCase(caseId)) };
     } catch (error) {
@@ -173,6 +182,13 @@ export class CaseService {
       aggregateId: caseId,
       audienceType: 'district',
       audienceId: row.district_id,
+    });
+    await this.events.publish({
+      eventType: 'case.closed',
+      aggregateType: 'case',
+      aggregateId: caseId,
+      audienceType: 'user',
+      audienceId: row.user_id,
     });
     return row;
   }

@@ -56,7 +56,14 @@ export class VolunteerController {
 
   @Get('cases/:case_id')
   async caseDetail(@Req() request: Request, @Param('case_id') caseId: string) {
-    return this.cases.assertCaseAccess(caseId, request.auth!);
+    const row = await this.cases.assertCaseAccess(caseId, request.auth!);
+    return { ...row, messages: await this.listCaseMessages(caseId) };
+  }
+
+  @Get('cases/:case_id/messages')
+  async listMessages(@Req() request: Request, @Param('case_id') caseId: string) {
+    await this.cases.assertCaseAccess(caseId, request.auth!);
+    return this.listCaseMessages(caseId);
   }
 
   @Post('cases/:case_id/messages')
@@ -88,6 +95,20 @@ export class VolunteerController {
   @Post('cases/:case_id/close')
   async close(@Req() request: Request, @Param('case_id') caseId: string) {
     return this.cases.closeCase(caseId, this.requireStaff(request));
+  }
+
+  private async listCaseMessages(caseId: string) {
+    const rows = await this.database
+      .query(
+        `SELECT id, case_id, sender_role, sender_id, content, ai_assisted, visibility_scope, created_at
+         FROM case_messages
+         WHERE case_id = ?
+         ORDER BY created_at ASC
+         LIMIT 200`,
+        [caseId],
+      )
+      .then(([rows]) => rows as any[]);
+    return { items: rows };
   }
 
   @Post('rest')

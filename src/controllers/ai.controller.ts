@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Inject, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import type { Pool } from 'mysql2/promise';
 import { DATABASE } from '../database.module';
 import { AIService } from '../services/ai.service';
@@ -36,6 +36,41 @@ export class AIController {
         goal: body?.goal ?? 'empathetic_listening',
       },
     });
+  }
+
+
+  @Post('chat/stream')
+  async chatStream(@Req() request: Request, @Body() body: any, @Res() response: Response) {
+    response.status(200).set({
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    response.flushHeaders();
+    const send = (event: string, payload: unknown) => {
+      if (response.writableEnded) return;
+      response.write('event: ' + event + '\n');
+      response.write('data: ' + JSON.stringify(payload) + '\n\n');
+    };
+    try {
+      const result = await this.ai.streamChatSuggestion({
+        requestedBy: request.auth?.userId ?? request.auth?.staffId ?? 'system',
+        userId: request.auth?.userId,
+        caseId: body?.case_id ?? null,
+        context: {
+          main_request: body?.main_request ?? body?.free_text ?? null,
+          current_safety: body?.current_safety ?? 'unknown',
+          goal: body?.goal ?? 'empathetic_listening',
+        },
+        onDelta: (text) => send('delta', { text }),
+      });
+      send('done', result);
+    } catch (error) {
+      send('error', { message: error instanceof Error ? error.message : '实时聊天失败，请稍后重试' });
+    } finally {
+      response.end();
+    }
   }
 
   @Post('transfer-summary')

@@ -58,7 +58,12 @@ let VolunteerController = class VolunteerController {
         return this.cases.acceptCase(caseId, staffId, await this.getDistricts(staffId));
     }
     async caseDetail(request, caseId) {
-        return this.cases.assertCaseAccess(caseId, request.auth);
+        const row = await this.cases.assertCaseAccess(caseId, request.auth);
+        return { ...row, messages: await this.listCaseMessages(caseId) };
+    }
+    async listMessages(request, caseId) {
+        await this.cases.assertCaseAccess(caseId, request.auth);
+        return this.listCaseMessages(caseId);
     }
     async sendMessage(request, caseId, body) {
         const row = await this.cases.assertCaseAccess(caseId, request.auth);
@@ -83,6 +88,16 @@ let VolunteerController = class VolunteerController {
     }
     async close(request, caseId) {
         return this.cases.closeCase(caseId, this.requireStaff(request));
+    }
+    async listCaseMessages(caseId) {
+        const rows = await this.database
+            .query(`SELECT id, case_id, sender_role, sender_id, content, ai_assisted, visibility_scope, created_at
+         FROM case_messages
+         WHERE case_id = ?
+         ORDER BY created_at ASC
+         LIMIT 200`, [caseId])
+            .then(([rows]) => rows);
+        return { items: rows };
     }
     async rest(request, body) {
         const staffId = this.requireStaff(request);
@@ -234,6 +249,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], VolunteerController.prototype, "caseDetail", null);
+__decorate([
+    (0, common_1.Get)('cases/:case_id/messages'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('case_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], VolunteerController.prototype, "listMessages", null);
 __decorate([
     (0, common_1.Post)('cases/:case_id/messages'),
     __param(0, (0, common_1.Req)()),

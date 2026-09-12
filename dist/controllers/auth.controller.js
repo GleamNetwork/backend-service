@@ -32,6 +32,7 @@ let AuthController = class AuthController {
         });
         return {
             token: result.token,
+            refresh_token: result.refreshToken,
             user: result.user,
             expires_at: result.expiresAt.toISOString(),
         };

@@ -52,7 +52,7 @@ let AuthService = class AuthService {
         const [user] = await this.database
             .query('SELECT * FROM users WHERE id = ?', [userId])
             .then(([rows]) => rows);
-        return { token, user, expiresAt };
+        return { token, refreshToken: refresh, user, expiresAt };
     }
     async loginStaff(account, password) {
         const [staff] = await this.database
