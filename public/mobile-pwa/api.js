@@ -39,7 +39,8 @@
   };
 
   const sameServerBase = location.protocol + '//' + location.host + '/api/v1';
-  const defaultBase = location.hostname === '8.133.215.80' ? sameServerBase : REMOTE_DEFAULT;
+  const backendHosted = location.pathname.startsWith('/api/v1/docs/mobile-pwa');
+  const defaultBase = backendHosted || location.hostname === '8.133.215.80' ? sameServerBase : REMOTE_DEFAULT;
   const queryBase = new URLSearchParams(location.search).get('api');
   let base = normalizeBase(queryBase || localStorage.getItem(API_KEY) || defaultBase);
   let session = restoreSession();

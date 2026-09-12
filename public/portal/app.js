@@ -2,6 +2,7 @@
   'use strict';
 
   const REMOTE_DEFAULT = 'http://8.133.215.80:8080/api/v1';
+  const SAME_SERVER_BASE = `${location.protocol}//${location.host}/api/v1`;
   const API_KEY = 'tongpin.portal.apiBase';
   const SESSION_KEY = 'tongpin.portal.session';
   const mascot = '../mobile-pwa/assets/xiaopin-wave.png';
@@ -74,9 +75,15 @@
     }
   };
 
+  function isBackendHosted() {
+    return location.protocol.startsWith('http') && location.pathname.startsWith('/api/v1/docs/portal');
+  }
+
   function getInitialApiBase() {
     const queryBase = new URLSearchParams(location.search).get('api');
-    return normalizeBase(queryBase || localStorage.getItem(API_KEY) || REMOTE_DEFAULT);
+    if (queryBase) return normalizeBase(queryBase);
+    if (isBackendHosted()) return normalizeBase(SAME_SERVER_BASE);
+    return normalizeBase(localStorage.getItem(API_KEY) || REMOTE_DEFAULT);
   }
 
   function normalizeBase(value) { return String(value || REMOTE_DEFAULT).trim().replace(/\/$/, ''); }
@@ -396,7 +403,7 @@
     const root = document.querySelector('#app');
     const modal = document.createElement('div'); modal.className = 'modal-backdrop'; modal.innerHTML = state.modal === 'api' ? renderApiModal() : renderSafetyModal(); root.append(modal);
   }
-  function renderApiModal() { return `<section class="modal" role="dialog" aria-modal="true" aria-labelledby="api-title"><div class="modal-head"><div><h2 id="api-title">API 连接设置</h2><p>默认指向当前远程服务。生产部署建议使用 HTTPS 域名，并由后端配置明确 CORS 来源。</p></div><button class="close-button" type="button" data-action="close-modal" aria-label="关闭">×</button></div><form id="api-form" class="field-list" style="margin-top:16px"><div class="field"><label for="api-base">API Base URL</label><input id="api-base" name="api_base" value="${esc(state.apiBase)}" inputmode="url" required><small>例如 http://8.133.215.80:8080/api/v1</small></div><div class="form-actions"><button class="button" type="submit">保存并检查连接</button><button class="button secondary" type="button" data-action="close-modal">取消</button></div></form></section>`; }
+  function renderApiModal() { return `<section class="modal" role="dialog" aria-modal="true" aria-labelledby="api-title"><div class="modal-head"><div><h2 id="api-title">API 连接设置</h2><p>页面由后端托管时自动使用同源接口；本地静态预览才使用远程 API。生产部署建议使用 HTTPS 域名，并由后端配置明确 CORS 来源。</p></div><button class="close-button" type="button" data-action="close-modal" aria-label="关闭">×</button></div><form id="api-form" class="field-list" style="margin-top:16px"><div class="field"><label for="api-base">API Base URL</label><input id="api-base" name="api_base" value="${esc(state.apiBase)}" inputmode="url" required><small>例如 http://8.133.215.80:8080/api/v1</small></div><div class="form-actions"><button class="button" type="submit">保存并检查连接</button><button class="button secondary" type="button" data-action="close-modal">取消</button></div></form></section>`; }
   function renderSafetyModal() { return `<section class="modal" role="dialog" aria-modal="true" aria-labelledby="safety-title"><div class="modal-head"><div><h2 id="safety-title">先照顾眼前的安全</h2><p>不需要完成日记、量表或设备授权。页面不会自动报警或外呼。</p></div><button class="close-button" type="button" data-action="close-modal" aria-label="关闭">×</button></div><div class="note-box" style="margin-top:16px"><strong>如果你现在有伤害自己或他人的想法、已经受伤、服药过量，或无法保证此刻安全</strong>请优先联系所在地急救服务或公共安全服务，并尽量让可信任的人陪在身边。</div><form id="safety-form" class="field-list" style="margin-top:16px"><div class="field"><label for="safety-status">当前状态</label><select id="safety-status" name="safety_status"><option value="unsafe">我现在不安全</option><option value="unsure">我不确定</option><option value="safe">我现在安全</option></select></div><label class="choice" style="display:flex;align-items:center;gap:10px"><input type="checkbox" name="physical_emergency" style="width:auto"><span><strong>有身体急症或已经受伤</strong><small>需要现实医疗支持，不等待普通陪伴。</small></span></label><label class="choice" style="display:flex;align-items:center;gap:10px"><input type="checkbox" name="trusted_contact_available" style="width:auto"><span><strong>身边有可信任的人可以陪伴</strong><small>请按你自己的选择联系，不由应用代为通知。</small></span></label><div class="form-actions"><button class="button danger" type="submit">提交即时安全求助</button><button class="button secondary" type="button" data-action="close-modal">取消</button></div></form></section>`; }
 
   async function refreshUser() { await run(loadUser, '用户数据已刷新'); }
