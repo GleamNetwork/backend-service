@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fff8f5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="同频">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer">
+  <title>同频 · 小频陪伴</title>
+  <style>
+    :root {
+      --canvas: #fff8f5;
+      --ink: #4a2f39;
+      --muted: #836d75;
+      --petal: #f4c4c1;
+      --apricot: #f1bb7b;
+      --butter: #f2dda1;
+      --lilac: #d9cbe1;
+      --sage: #c7d6c3;
+      --line: rgba(105, 73, 83, .12);
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-width: 320px; min-height: 100%; margin: 0; }
+    body { color: var(--ink); background: #f2e6df; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(224, 137, 116, .58); outline-offset: 3px; }
+
+    .app {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      max-width: 430px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--canvas);
+    }
+    .app::before {
+      content: "";
+      position: absolute;
+      z-index: -3;
+      inset: 0;
+      background: url("./assets/home-morning-room.png") center top / cover no-repeat;
+      transform: scale(1.025);
+      animation: room-drift 18s ease-in-out infinite alternate;
+    }
+    .app::after {
+      content: "";
+      position: absolute;
+      z-index: -2;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255,249,245,.02) 0%, rgba(255,248,245,.08) 28%, rgba(255,248,245,.7) 53%, rgba(255,248,245,.96) 70%, var(--canvas) 100%),
+        radial-gradient(circle at 53% 32%, transparent 0%, rgba(255,247,241,.18) 48%, rgba(255,248,245,.45) 100%);
+    }
+    .grain {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      opacity: .2;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(122,84,86,.2) .45px, transparent .55px);
+      background-size: 5px 5px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.3), transparent 42%);
+    }
+
+    .home { height: 100dvh; min-height: 100dvh; padding: calc(10px + env(safe-area-inset-top)) 22px calc(116px + env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; }
+    .home::-webkit-scrollbar { display: none; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
+    .quick-volunteer { display: inline-flex; align-items: center; gap: 7px; min-height: 41px; padding: 0 15px; border: 1px solid rgba(231,151,140,.3); border-radius: 15px; background: rgba(255,245,241,.88); box-shadow: 0 7px 16px rgba(165,97,99,.1), inset 0 1px 0 rgba(255,255,255,.92); color: #9f565d; cursor: pointer; font-size: 13px; font-weight: 800; letter-spacing: -.02em; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
+    .quick-volunteer span { font-size: 17px; line-height: 1; }.quick-volunteer:hover { background: #fffaf7; box-shadow: 0 9px 19px rgba(165,97,99,.14), inset 0 1px 0 rgba(255,255,255,.92); transform: translateY(-1px); }.quick-volunteer:active { transform: scale(.96); }
+    .round-control {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,255,255,.62);
+      border-radius: 50%;
+      background: rgba(255,251,247,.61);
+      box-shadow: 0 8px 16px rgba(114,77,83,.07), inset 0 1px 0 rgba(255,255,255,.86);
+      color: #9f7e8b;
+      cursor: pointer;
+      font-size: 18px;
+      transition: transform .22s ease, background .22s ease;
+    }
+    .round-control:active { transform: scale(.92); }.round-control:hover { background: rgba(255,253,250,.9); }
+
+    .mascot-stage { position: relative; height: clamp(232px, 33dvh, 296px); margin: -5px -22px 0; overflow: visible; }
+    .mascot-halo {
+      position: absolute;
+      top: 8%;
+      left: 50%;
+      width: min(66vw, 278px);
+      aspect-ratio: 1;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,251,248,.65) 0%, rgba(246,205,195,.2) 43%, transparent 70%);
+      filter: blur(2px);
+    }
+    .mascot-halo::before, .mascot-halo::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,251,248,.64);
+      animation: mote 4.8s ease-in-out infinite;
+    }
+    .mascot-halo::before { width: 9px; height: 9px; top: 16%; left: 10%; }.mascot-halo::after { width: 7px; height: 7px; right: 4%; bottom: 21%; animation-delay: -2.2s; }
+    .pet-dialogue {
+      position: absolute;
+      z-index: 4;
+      top: 0;
+      left: 56%;
+      max-width: 118px;
+      margin: 0;
+      padding: 9px 11px;
+      border: 1px solid rgba(255,255,255,.78);
+      border-radius: 17px 17px 17px 5px;
+      background: rgba(255,251,248,.82);
+      box-shadow: 0 9px 19px rgba(126,85,90,.1), inset 0 1px 0 rgba(255,255,255,.9);
+      color: #795862;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: -.01em;
+      line-height: 1.34;
+      pointer-events: none;
+      text-wrap: balance;
+      transform-origin: 0 100%;
+      transition: color .25s ease, background .25s ease;
+    }
+    .pet-dialogue::after { content: ""; position: absolute; bottom: -6px; left: 13px; width: 11px; height: 11px; border-right: 1px solid rgba(255,255,255,.78); border-bottom: 1px solid rgba(255,255,255,.78); background: rgba(255,251,248,.82); transform: rotate(45deg); }
+    .pet-dialogue.is-updating { animation: pet-dialogue-pop .48s cubic-bezier(.2,.9,.3,1) both; }
+    .mascot-shadow { position: absolute; z-index: 0; bottom: 8px; left: 50%; width: min(44vw, 176px); height: 14px; transform: translateX(-50%); border-radius: 50%; background: rgba(122,84,86,.16); filter: blur(9px); animation: grounded-shadow 4.6s ease-in-out infinite; }
+    .mascot {
+      position: absolute;
+      z-index: 1;
+      bottom: 0;
+      left: 50%;
+      width: min(64vw, 268px);
+      aspect-ratio: 1;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      isolation: isolate;
+      touch-action: manipulation;
+      filter: drop-shadow(0 14px 14px rgba(125,85,89,.16));
+      animation: pet-idle 6.8s cubic-bezier(.42,.02,.29,1) infinite;
+    }
+    .mascot:focus-visible { outline: 2px solid rgba(220,133,130,.85); outline-offset: 5px; border-radius: 45%; }
+    .mascot::before, .mascot::after { content: ""; position: absolute; z-index: -1; left: 50%; border-radius: 50%; pointer-events: none; }
+    .mascot::before { bottom: 25%; width: 27%; aspect-ratio: 1; transform: translateX(-50%) scale(.76); background: radial-gradient(circle, rgba(255,190,182,.8) 0%, rgba(255,198,190,.28) 38%, transparent 72%); filter: blur(2px); animation: heart-glow 3.9s ease-in-out infinite; }
+    .mascot::after { bottom: 30%; width: 72%; height: 20%; transform: translateX(-50%); border: 1px solid rgba(255,244,238,.58); opacity: .65; animation: listening-ring 5.8s ease-out infinite; }
+    .mascot-core { position: absolute; z-index: 1; inset: 0; transform-origin: center 74%; animation: breathe 4.6s ease-in-out infinite; }
+    .mascot-sprite {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity .34s ease, transform .45s cubic-bezier(.22,.85,.3,1);
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .mascot-sprite { opacity: 0; transform: translateY(8px) scale(.94); }
+    .mascot-sprite.idle { opacity: 1; transform: translateY(0) scale(1); }
+    .mascot.is-pet-wave:not(.is-responding) .idle,
+    .mascot.is-pet-curious:not(.is-responding) .idle,
+    .mascot.is-pet-peek:not(.is-responding) .idle,
+    .mascot.is-pet-cheer:not(.is-responding) .idle,
+    .mascot.is-pet-heart:not(.is-responding) .idle { opacity: 0; transform: translateY(8px) scale(.95); }
+    .mascot.is-pet-wave:not(.is-responding) .wave,
+    .mascot.is-pet-curious:not(.is-responding) .curious,
+    .mascot.is-pet-peek:not(.is-responding) .curious,
+    .mascot.is-pet-cheer:not(.is-responding) .cheer,
+    .mascot.is-pet-heart:not(.is-responding) .heart { opacity: 1; transform: translateY(0) scale(1); }
+    .mascot.is-pet-hop:not(.is-responding) { animation: pet-hop 1.15s cubic-bezier(.2,.85,.23,1) both; }
+    .mascot.is-pet-cheer:not(.is-responding) { animation: pet-cheer 1.45s cubic-bezier(.18,.88,.24,1) both; }
+    .mascot.is-pet-listening:not(.is-responding) { animation: pet-listening 3.2s cubic-bezier(.36,.02,.26,1) infinite; }
+    .mascot.is-pet-curious:not(.is-responding) { animation: pet-curious 2.7s cubic-bezier(.36,.02,.26,1) infinite; }
+    .mascot.is-pet-peek:not(.is-responding) { animation: pet-peek 2.1s cubic-bezier(.36,.02,.26,1) infinite; }
+    .mascot.is-pet-wave:not(.is-responding) { animation: pet-wave 2.5s cubic-bezier(.42,.02,.29,1) infinite; }
+    .mascot.is-pet-heart:not(.is-responding) { animation: pet-heart 3.8s cubic-bezier(.36,.02,.26,1) infinite; }
+    .mascot.is-responding { animation: mascot-answer .88s cubic-bezier(.2,.85,.24,1) both; }
+    .mascot.is-responding .idle, .mascot.is-responding .curious, .mascot.is-responding .cheer, .mascot.is-responding .heart { opacity: 0; transform: translateY(8px) scale(.95); }
+    .mascot.is-responding .wave { opacity: 1; transform: translateY(0) scale(1); }
+    .pet-particle {
+      position: absolute;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      color: #f29a90;
+      font-size: 18px;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .pet-particle.one { top: 32%; right: 1%; }.pet-particle.two { top: 10%; left: 3%; color: #d6a7a3; font-size: 15px; }.pet-particle.three { right: 7%; bottom: 26%; color: #f6c47d; font-size: 16px; }
+    .mascot.is-pet-wave .pet-particle.one, .mascot.is-responding .pet-particle.one { animation: pet-wave-spark 1.3s ease-out infinite; }
+    .mascot.is-pet-hop .pet-particle { animation: pet-hop-spark .9s cubic-bezier(.15,.8,.25,1) both; }
+    .mascot.is-pet-hop .pet-particle.two { animation-delay: .12s; }.mascot.is-pet-hop .pet-particle.three { animation-delay: .22s; }
+    .mascot.is-pet-cheer .pet-particle { animation: pet-cheer-spark 1.05s cubic-bezier(.15,.8,.25,1) both; }
+    .mascot.is-pet-cheer .pet-particle.two { animation-delay: .12s; }.mascot.is-pet-cheer .pet-particle.three { animation-delay: .24s; }
+    .mascot.is-pet-listening .pet-particle.two { animation: pet-listen-spark 1.5s ease-in-out infinite; }
+    .mascot.is-pet-peek .pet-particle.three { animation: pet-peek-spark 1.25s ease-in-out infinite; }
+    .mascot.is-pet-heart .pet-particle { animation: pet-heart-spark 1.8s ease-out infinite; }
+    .mascot.is-pet-heart .pet-particle.two { animation-delay: .22s; }.mascot.is-pet-heart .pet-particle.three { animation-delay: .42s; }
+    .mascot-stage.is-pet-hop .mascot-shadow { animation: pet-shadow-hop 1.15s cubic-bezier(.2,.85,.23,1) both; }
+    .mascot-stage.is-pet-cheer .mascot-shadow { animation: pet-shadow-hop 1.45s cubic-bezier(.18,.88,.24,1) both; }
+    .mascot-stage.is-pet-listening .mascot-halo { animation: pet-halo-listen 3.2s ease-in-out infinite; }
+    .mascot-stage.is-pet-peek .mascot-halo { animation: pet-halo-listen 2.1s ease-in-out infinite; }
+    .home-copy { position: relative; z-index: 3; margin-top: -2px; text-align: center; }
+    .waveform { display: flex; align-items: center; justify-content: center; gap: 4px; height: 24px; margin: 0 0 8px; color: #ef9b91; }
+    .waveform::before, .waveform::after { content: ""; width: 42px; height: 1px; background: linear-gradient(90deg, transparent, #f2b0a2); }.waveform::after { transform: scaleX(-1); }
+    .waveform i { display: block; width: 2.5px; border-radius: 99px; background: currentColor; opacity: .84; transform-origin: center; animation: wave 1.8s ease-in-out infinite; }
+    .waveform i:nth-of-type(1) { height: 9px; animation-delay: -.2s; }.waveform i:nth-of-type(2) { height: 18px; animation-delay: -.45s; }.waveform i:nth-of-type(3) { height: 29px; animation-delay: -.75s; }.waveform i:nth-of-type(4) { height: 16px; animation-delay: -.6s; }.waveform i:nth-of-type(5) { height: 9px; animation-delay: -.36s; }
+    .waveform.is-listening i { animation-duration: .7s; }
+    .listen-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: min(100%, 302px);
+      min-height: 55px;
+      margin: 0 auto;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 999px;
+      background: linear-gradient(100deg, rgba(255,221,152,.92), rgba(246,180,114,.94));
+      box-shadow: 0 13px 25px rgba(205,135,99,.21), inset 0 1px 1px rgba(255,255,255,.75);
+      color: #4b3037;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+    .listen-button:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(205,135,99,.26), inset 0 1px 1px rgba(255,255,255,.75); }.listen-button:active { transform: scale(.98); }
+    .listen-icon { display: grid; place-items: center; width: 25px; height: 25px; font-size: 20px; line-height: 1; }.listen-arrow { font-size: 26px; font-weight: 350; line-height: .6; }
+    .local-note { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 16px 0 0; color: #ab9ba8; font-size: 12px; }.lock { position: relative; width: 13px; height: 11px; border: 2px solid #b4a5c8; border-radius: 3px; }.lock::before { content: ""; position: absolute; left: 2px; bottom: 8px; width: 5px; height: 6px; border: 2px solid #b4a5c8; border-bottom: 0; border-radius: 6px 6px 0 0; }
+
+    .tabbar {
+      position: absolute;
+      z-index: 9;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      padding: 10px 17px calc(14px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(255,255,255,.72);
+      border-radius: 31px 31px 0 0;
+      background: rgba(255,249,246,.82);
+      box-shadow: 0 -10px 28px rgba(150,111,110,.07), inset 0 1px 0 rgba(255,255,255,.92);
+      backdrop-filter: blur(20px) saturate(1.15);
+      -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    }
+    .tab { display: grid; justify-items: center; gap: 3px; min-height: 49px; padding: 5px 9px; border: 0; border-radius: 20px; background: none; color: #7b6a70; cursor: pointer; font-size: 13px; transition: color .2s ease, background .2s ease, transform .2s ease; }.tab span:first-child { height: 25px; font-size: 23px; line-height: 21px; }.tab span.tab-icon { display: grid; place-items: center; font-size: 18px; line-height: 1; }.tab .tab-icon i { font-size: 18px; }.tab.is-active { background: rgba(248,213,213,.6); color: #d9807e; font-weight: 750; }.tab.is-active .tab-icon { transform: translateY(-1px) scale(1.04); }.tab:active { transform: scale(.96); }.tab:focus-visible { outline: 2px solid rgba(217,128,126,.72); outline-offset: 2px; }
+
+    .scrim { position: absolute; z-index: 11; inset: 0; visibility: hidden; opacity: 0; background: rgba(75,45,54,.2); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); transition: opacity .24s ease, visibility .24s ease; }.scrim.is-open { visibility: visible; opacity: 1; }
+    .panel {
+      position: absolute;
+      z-index: 12;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      max-height: min(700px, 84dvh);
+      padding: 10px 21px calc(24px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      visibility: hidden;
+      transform: translateY(102%);
+      border-radius: 32px 32px 0 0;
+      background: rgba(255,251,248,.97);
+      box-shadow: 0 -18px 45px rgba(92,56,65,.2), inset 0 1px 0 rgba(255,255,255,.9);
+      transition: transform .42s cubic-bezier(.22,.86,.3,1), visibility .42s;
+      scrollbar-width: none;
+    }
+    .panel::-webkit-scrollbar { display: none; }.panel.is-open { visibility: visible; transform: translateY(0); }.panel-handle { width: 36px; height: 4px; margin: 0 auto 18px; border-radius: 99px; background: rgba(101,68,77,.16); }
+    .panel-head { display: flex; align-items: center; gap: 13px; }.panel-head h2 { margin: 0; font-size: 23px; letter-spacing: -.06em; }.panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }.panel-mascot { width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 7px 7px rgba(126,83,89,.12)); }.close { margin-left: auto; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #f9edeb; color: var(--muted); cursor: pointer; font-size: 24px; line-height: 1; }
+    .panel-head { position: sticky; top: -10px; z-index: 3; margin: -10px -21px 0; padding: 10px 21px 9px; background: rgba(255,251,248,.97); }
+    .message-list { display: grid; gap: 10px; margin: 22px 0 14px; }.message { width: fit-content; max-width: 86%; padding: 12px 14px; border-radius: 18px 18px 18px 5px; background: #fff; box-shadow: 0 6px 14px rgba(103,65,75,.05); font-size: 14px; line-height: 1.52; }.message.me { justify-self: end; border-radius: 18px 18px 5px 18px; background: var(--petal); }.message small { display: block; margin-bottom: 4px; color: #d98582; font-size: 11px; font-weight: 750; }
+    .prompt-row { display: flex; flex-wrap: wrap; gap: 8px; }.prompt { min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.8); color: var(--muted); cursor: pointer; font-size: 12px; transition: transform .2s ease, background .2s ease; }.prompt:hover { background: var(--butter); color: var(--ink); }.prompt:active { transform: scale(.96); }
+    .composer { display: grid; grid-template-columns: 1fr 45px; gap: 9px; margin-top: 17px; }.composer input { height: 47px; min-width: 0; padding: 0 15px; border: 1px solid var(--line); border-radius: 16px; background: #fff; color: var(--ink); outline: none; font-size: 13px; }.composer input::placeholder { color: #af9da2; }.send { border: 0; border-radius: 16px; background: var(--apricot); cursor: pointer; font-size: 20px; }
+    .record-card { margin-top: 21px; padding: 20px; border-radius: 25px; background: linear-gradient(135deg, rgba(242,221,161,.74), rgba(255,255,255,.8)); }.record-card h3 { margin: 0; font-size: 23px; letter-spacing: -.055em; }.record-card p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }.feelings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }.feeling { min-height: 72px; padding: 13px; border: 1px solid rgba(104,72,80,.08); border-radius: 18px; background: rgba(255,255,255,.74); cursor: pointer; text-align: left; }.feeling.is-selected { background: var(--petal); }.feeling b { display: block; font-size: 14px; }.feeling span { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .community-welcome { display: flex; align-items: center; gap: 12px; margin-top: 19px; padding: 15px; border: 1px solid rgba(255,255,255,.78); border-radius: 21px; background: linear-gradient(135deg, rgba(225,237,214,.82), rgba(255,251,244,.86)); }.community-welcome > span { display: grid; flex: 0 0 auto; place-items: center; width: 43px; height: 43px; border-radius: 15px; background: rgba(255,255,255,.58); font-size: 23px; }.community-welcome strong { display: block; font-size: 15px; }.community-welcome p { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }.community-feed { display: grid; gap: 10px; margin-top: 14px; }.community-post { position: relative; overflow: hidden; padding: 14px; border: 1px solid rgba(104,72,80,.08); border-radius: 20px; background: rgba(255,255,255,.8); box-shadow: 0 8px 18px rgba(109,75,80,.045); }.community-post::before { position: absolute; top: 0; bottom: 0; left: 0; width: 4px; background: #d9cbe1; content: ""; }.community-post.is-family::before { background: #f2dda1; }.community-post.is-friend::before { background: #f4c4c1; }.community-post header { display: flex; align-items: center; gap: 9px; }.community-avatar { display: grid; flex: 0 0 auto; place-items: center; width: 36px; height: 36px; border-radius: 13px; background: #fbf2f0; font-size: 19px; }.community-post header div { min-width: 0; }.community-post strong { display: block; font-size: 13px; }.community-post small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }.community-tag { margin-left: auto; padding: 5px 8px; border-radius: 999px; background: #f9efed; color: #9a747a; font-size: 10px; font-weight: 800; }.community-post p { margin: 11px 2px 0; color: #694d55; font-size: 13px; line-height: 1.62; }
+    .setting-list { margin-top: 20px; overflow: hidden; border: 1px solid rgba(104,72,80,.08); border-radius: 22px; background: #fff; }.setting { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 65px; padding: 13px 15px; border: 0; border-bottom: 1px solid var(--line); background: none; cursor: pointer; text-align: left; }.setting:last-child { border-bottom: 0; }.setting strong { display: block; font-size: 14px; }.setting small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }.setting b { padding: 6px 9px; border-radius: 999px; background: var(--lilac); color: var(--ink); font-size: 11px; }.setting b.sage { background: var(--sage); }
+    .notice { margin: 18px 0 0; padding: 15px; border-radius: 19px; background: #f9efed; color: var(--muted); font-size: 12px; line-height: 1.58; }.notice strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 13px; }
+    .home-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 326px; margin: 11px auto 0; }
+    .home-action { min-height: 58px; padding: 8px 5px; border: 1px solid rgba(255,255,255,.78); border-radius: 17px; background: rgba(255,255,255,.52); box-shadow: 0 7px 18px rgba(116,79,83,.06); color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1.3; transition: transform .2s ease, background .2s ease; }
+    .home-action:first-child { background: rgba(217,203,225,.45); }.home-action:nth-child(2) { background: rgba(242,221,161,.48); }.home-action:nth-child(3) { background: rgba(244,196,193,.47); }.home-action:active { transform: scale(.96); }
+    .home-action-icon { display: block; margin-bottom: 4px; color: var(--ink); font-size: 20px; line-height: 1; }
+    .body-overview { position: relative; margin: 28px 0 8px; padding: 18px 15px 15px; overflow: hidden; border: 1px solid rgba(255,255,255,.8); border-radius: 27px 27px 21px 21px; background: rgba(255,252,249,.7); box-shadow: 0 15px 30px rgba(125,84,88,.08), inset 0 1px 0 rgba(255,255,255,.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .body-overview::before { content: ""; position: absolute; top: -65px; right: -52px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(244,196,193,.36), transparent 68%); pointer-events: none; }
+    .body-overview-head { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .body-overview-kicker { display: block; color: #bf7977; font-size: 10px; font-weight: 800; letter-spacing: .11em; }
+    .body-overview h2 { margin: 4px 0 0; color: var(--ink); font-size: 20px; letter-spacing: -.06em; line-height: 1.1; }
+    .body-overview-head p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .metric-refresh { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 35px; height: 35px; padding: 0; border: 1px solid rgba(176,128,130,.16); border-radius: 50%; background: rgba(255,255,255,.72); box-shadow: 0 5px 12px rgba(126,85,90,.07); color: #bd7b7a; cursor: pointer; font-size: 18px; line-height: 1; transition: transform .25s ease, background .25s ease; }
+    .metric-refresh:hover { background: #fff; transform: rotate(24deg); }.metric-refresh:active { transform: scale(.9) rotate(112deg); }
+    .home-metric-card { position: relative; z-index: 1; display: block; width: 100%; margin-top: 15px; padding: 14px; border: 1px solid rgba(255,255,255,.88); border-radius: 22px; background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(250,239,235,.68)); box-shadow: inset 0 1px 0 rgba(255,255,255,.94); cursor: pointer; text-align: left; transition: transform .22s ease, box-shadow .22s ease, background .22s ease; }
+    .home-metric-card:hover { transform: translateY(-2px); background: rgba(255,255,255,.92); box-shadow: 0 10px 20px rgba(125,84,88,.09), inset 0 1px 0 rgba(255,255,255,.94); }.home-metric-card:active { transform: scale(.985); }
+    .home-metric-meta { display: flex; align-items: center; justify-content: space-between; gap: 9px; color: #94747b; font-size: 10px; line-height: 1.3; }
+    .home-metric-meta span:first-child { display: inline-flex; align-items: center; gap: 5px; color: #836970; font-weight: 700; }.home-metric-meta span:last-child { text-align: right; }
+    .home-metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 11px; }
+    .home-metric { min-height: 84px; padding: 10px; border: 1px solid rgba(255,255,255,.7); border-radius: 17px; background: rgba(255,255,255,.57); }
+    .home-metric:nth-child(1) { background: rgba(249,220,218,.58); }.home-metric:nth-child(2) { background: rgba(220,231,218,.59); }.home-metric:nth-child(3) { background: rgba(232,224,239,.62); }.home-metric:nth-child(4) { background: rgba(249,234,194,.58); }
+    .home-metric-top { display: flex; align-items: center; gap: 6px; color: #806970; font-size: 11px; }.home-metric-top b { font-size: 15px; font-weight: 400; line-height: 1; }
+    .home-metric strong { display: block; margin-top: 8px; color: var(--ink); font-size: 19px; letter-spacing: -.055em; line-height: 1; font-variant-numeric: tabular-nums; }.home-metric strong small { margin-left: 3px; color: #866e76; font-size: 10px; font-weight: 700; letter-spacing: 0; }
+    .home-metric em { display: block; margin-top: 5px; overflow: hidden; color: #987d83; font-size: 10px; font-style: normal; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+    .home-trend { position: relative; z-index: 1; display: block; margin-top: 11px; padding: 12px 12px 10px; border-radius: 18px; background: rgba(255,255,255,.48); }
+    .home-trend-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }.home-trend-head strong { font-size: 12px; }.home-trend-head span { color: #9d8087; font-size: 10px; }
+    .home-mini-bars { display: flex; align-items: end; height: 43px; gap: 5px; margin-top: 10px; }.home-mini-bar { position: relative; flex: 1; min-width: 10px; height: var(--metric-bar); border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #e3aea8, #f4d8b7); transform-origin: bottom; animation: metric-rise .52s cubic-bezier(.2,.85,.3,1) both; }.home-mini-bar:nth-child(2n) { background: linear-gradient(180deg, #b8cfb2, #e7e1be); }.home-mini-bar i { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); color: #a1858b; font-size: 9px; font-style: normal; }
+    .eyebrow { margin: 21px 0 8px; color: #d18b82; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+    .panel-copy { margin: 17px 0 0; color: var(--muted); font-size: 13px; line-height: 1.62; }
+    .panel-copy strong { color: var(--ink); }
+    .panel-actions { display: grid; gap: 9px; margin-top: 16px; }
+    .primary-action, .secondary-action { min-height: 48px; border: 0; border-radius: 17px; cursor: pointer; font-weight: 750; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+    .primary-action { background: linear-gradient(100deg, #f5c783, #efad78); box-shadow: 0 9px 17px rgba(205,135,99,.16); color: #4b3037; }
+    .secondary-action { border: 1px solid var(--line); background: #fff; color: var(--muted); }
+    .primary-action:active, .secondary-action:active { transform: scale(.98); }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
+    .choice { min-height: 55px; padding: 10px 11px; border: 1px solid rgba(104,72,80,.1); border-radius: 17px; background: rgba(255,255,255,.84); color: var(--ink); cursor: pointer; text-align: left; font-size: 13px; line-height: 1.35; }
+    .choice small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }.choice.is-selected { border-color: rgba(217,128,126,.42); background: #f8d9d5; }
+    .choice.wide { grid-column: 1 / -1; }
+    .soft-link { display: inline-flex; align-items: center; min-height: 36px; padding: 0; border: 0; background: none; color: #bd7777; cursor: pointer; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+    .safety-strip { display: flex; align-items: center; gap: 9px; margin-top: 18px; padding: 12px 13px; border-radius: 17px; background: #fff1ed; color: #8b626a; font-size: 12px; line-height: 1.42; }
+    .safety-strip b { flex: 0 0 auto; color: #bf716c; font-size: 17px; }.safety-strip button { margin-left: auto; flex: 0 0 auto; padding: 0; border: 0; background: none; color: #a65f60; cursor: pointer; font-size: 12px; font-weight: 750; }
+    .chat-footer-links { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 11px; }
+    .chat-footer-links .soft-link:last-child { margin-left: auto; }
+    .chat-hint { color: #a98f95; font-size: 11px; }
+    .diary-editor { margin-top: 18px; padding: 16px; border-radius: 22px; background: linear-gradient(135deg, rgba(242,221,161,.66), rgba(255,255,255,.86)); }
+    .diary-editor h3 { margin: 0; font-size: 20px; letter-spacing: -.05em; }.diary-editor p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .diary-editor textarea { width: 100%; min-height: 114px; margin-top: 13px; padding: 13px; resize: vertical; border: 1px solid rgba(104,72,80,.1); border-radius: 16px; background: rgba(255,255,255,.82); color: var(--ink); font: inherit; font-size: 13px; line-height: 1.55; outline: none; }.diary-editor textarea:focus { border-color: rgba(217,128,126,.48); }
+    .diary-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 11px; }.status-pill, .source-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 0 9px; border-radius: 999px; background: #f6e7e1; color: #8c6b73; font-size: 11px; }.status-pill.is-confirmed { background: #dbe8d6; color: #54715c; }.status-pill.is-shared { background: #dcd2e5; color: #625372; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }.action-row button { flex: 1 1 130px; min-height: 42px; padding: 0 10px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 700; }.action-row button.primary { border-color: transparent; background: var(--apricot); color: #4b3037; }.action-row button:disabled { cursor: not-allowed; opacity: .43; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }.metric { min-height: 88px; padding: 12px 9px; border-radius: 17px; background: #fff; box-shadow: 0 7px 16px rgba(103,65,75,.05); }.metric small { display: block; color: var(--muted); font-size: 11px; }.metric strong { display: block; margin-top: 8px; color: var(--ink); font-size: 17px; }.metric span { display: block; margin-top: 4px; color: #ba8e91; font-size: 10px; }
+    .trend-card { margin-top: 14px; padding: 15px; border-radius: 20px; background: rgba(255,255,255,.74); }.trend-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }.trend-head strong { font-size: 14px; }.trend-head span { color: var(--muted); font-size: 11px; }.bars { display: flex; align-items: end; justify-content: space-between; height: 90px; gap: 7px; margin-top: 13px; padding: 0 4px; border-bottom: 1px solid rgba(104,72,80,.12); }.bar { position: relative; flex: 1; min-width: 13px; height: var(--bar); border-radius: 8px 8px 2px 2px; background: linear-gradient(180deg, #e9b4ae, #f5ddbd); }.bar:nth-child(2n) { background: linear-gradient(180deg, #c8d7c2, #e7e4c6); }.bar i { position: absolute; top: 100%; left: 50%; margin-top: 7px; transform: translateX(-50%); color: var(--muted); font-size: 10px; font-style: normal; }.quality-line { display: flex; align-items: center; gap: 6px; margin-top: 21px; color: var(--muted); font-size: 11px; }.quality-dot { width: 7px; height: 7px; border-radius: 50%; background: #9cbc96; }
+    .care-card { margin-top: 18px; padding: 17px; border-radius: 22px; background: linear-gradient(135deg, rgba(199,214,195,.66), rgba(255,255,255,.86)); }.care-card h3 { margin: 0; font-size: 21px; letter-spacing: -.05em; }.care-card p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .check-row { display: flex; align-items: flex-start; gap: 9px; margin-top: 15px; color: var(--muted); cursor: pointer; font-size: 12px; line-height: 1.45; }.check-row input { width: 17px; height: 17px; margin: 0; accent-color: #d98582; }
+    .exercise-picker { display: grid; gap: 9px; margin-top: 16px; }.exercise-card { display: grid; grid-template-columns: 43px minmax(0,1fr) auto; align-items: center; gap: 11px; width: 100%; min-height: 65px; padding: 10px 12px; border: 1px solid rgba(104,72,80,.1); border-radius: 18px; background: rgba(255,255,255,.8); cursor: pointer; text-align: left; }.exercise-card.is-selected { border-color: rgba(217,128,126,.45); background: #f8ded6; }.exercise-symbol { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px; background: #f7e7cd; font-size: 20px; }.exercise-card strong { display: block; font-size: 14px; }.exercise-card small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.3; }.exercise-card em { color: #bb8989; font-size: 11px; font-style: normal; }
+    .exercise-stage { display: grid; place-items: center; min-height: 205px; margin-top: 16px; padding: 18px; border-radius: 22px; background: linear-gradient(145deg, #f9e9df, #f5dfcf); text-align: center; }.exercise-ring { display: grid; place-items: center; width: 129px; height: 129px; border: 8px solid rgba(234,159,144,.42); border-top-color: #db8c83; border-radius: 50%; box-shadow: 0 0 0 13px rgba(255,255,255,.38); animation: slow-spin 8s linear infinite; }.exercise-ring strong { animation: ring-copy 8s ease-in-out infinite; font-size: 28px; }.exercise-stage p { margin: 15px 0 0; color: #88656a; font-size: 13px; }.exercise-stage.is-paused .exercise-ring, .exercise-stage.is-stopped .exercise-ring { animation-play-state: paused; }.exercise-stage.is-paused .exercise-ring strong, .exercise-stage.is-stopped .exercise-ring strong { animation-play-state: paused; }
+    .support-state { margin-top: 18px; padding: 16px; border-radius: 20px; background: #f4eee9; }.support-state.is-pending { background: #e9f0e5; }.support-state strong { display: block; font-size: 16px; }.support-state p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }.support-timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 14px; }.support-step { position: relative; padding-top: 17px; color: #a28a8b; font-size: 10px; }.support-step::before { content: ""; position: absolute; top: 0; left: 0; width: 9px; height: 9px; border-radius: 50%; background: #d5c8c1; }.support-step.is-done { color: #698069; }.support-step.is-done::before { background: #9cbc96; }.support-step:not(:last-child)::after { content: ""; position: absolute; top: 4px; right: 3px; left: 13px; height: 1px; background: #d8ccc5; }
+    .resource-list { display: grid; gap: 9px; margin-top: 17px; }.resource-card { padding: 14px; border: 1px solid rgba(104,72,80,.08); border-radius: 18px; background: #fff; }.resource-card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }.resource-card strong { font-size: 14px; }.resource-card span { color: #bb7b78; font-size: 11px; font-weight: 750; }.resource-card p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.52; }.resource-card button { margin-top: 10px; min-height: 31px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; background: #fbf4ef; color: var(--muted); cursor: pointer; font-size: 11px; }
+    .field-list { display: grid; gap: 11px; margin-top: 18px; }.field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; }.field input, .field select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; outline: none; }.field input:focus, .field select:focus { border-color: rgba(217,128,126,.5); }.section-label { margin: 22px 0 8px; color: var(--ink); font-size: 15px; font-weight: 800; }.consent-list { overflow: hidden; border: 1px solid rgba(104,72,80,.08); border-radius: 19px; background: #fff; }.consent-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; min-height: 62px; padding: 11px 13px; border-bottom: 1px solid var(--line); }.consent-row:last-child { border-bottom: 0; }.consent-row strong { display: block; font-size: 13px; }.consent-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.3; }.switch { position: relative; width: 42px; height: 25px; padding: 0; border: 0; border-radius: 99px; background: #d8cecb; cursor: pointer; transition: background .2s ease; }.switch::after { content: \"\"; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; box-shadow: 0 2px 5px rgba(70,45,48,.16); transition: transform .2s ease; }.switch.is-on { background: #a9c19f; }.switch.is-on::after { transform: translateX(17px); }
+    .question-card { margin-top: 14px; padding: 15px; border-radius: 18px; background: #fff; box-shadow: 0 7px 16px rgba(103,65,75,.04); }.question-card strong { display: block; font-size: 14px; line-height: 1.45; }.question-options { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }.question-option { min-height: 33px; padding: 0 11px; border: 1px solid var(--line); border-radius: 999px; background: #fcf8f5; color: var(--muted); cursor: pointer; font-size: 11px; }.question-option.is-selected { border-color: transparent; background: var(--petal); color: var(--ink); }
+    .toast { position: absolute; z-index: 20; top: calc(16px + env(safe-area-inset-top)); left: 50%; display: none; width: max-content; max-width: calc(100% - 42px); padding: 11px 15px; transform: translateX(-50%); border-radius: 14px; background: rgba(74,47,57,.93); box-shadow: 0 12px 22px rgba(74,47,57,.22); color: #fff9f6; font-size: 12px; line-height: 1.35; text-align: center; }.toast.is-showing { display: block; animation: toast-in .25s ease both; }
+
+    @keyframes room-drift { from { transform: scale(1.025) translateY(0); } to { transform: scale(1.055) translateY(-6px); } }
+    @keyframes breathe { 0%,100% { transform: translateY(0) scale(1); } 48% { transform: translateY(-5px) scale(1.018,.987); } }
+    @keyframes pet-idle { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 50% { transform: translateX(-50%) translateY(-2px) rotate(-.45deg); } }
+    @keyframes metric-rise { from { transform: scaleY(.25); opacity: .32; } to { transform: scaleY(1); opacity: 1; } }
+    @keyframes pet-wave {
+      0%,100% { transform: translateX(-50%) translateY(0) rotate(0); }
+      13% { transform: translateX(calc(-50% - 2px)) translateY(-3px) rotate(-2.6deg); }
+      26% { transform: translateX(calc(-50% + 2px)) translateY(-1px) rotate(2.4deg); }
+      39% { transform: translateX(calc(-50% - 1px)) translateY(-4px) rotate(-2.2deg); }
+      52% { transform: translateX(calc(-50% + 2px)) translateY(-2px) rotate(2deg); }
+      67% { transform: translateX(-50%) translateY(-1px) rotate(-.8deg); }
+    }
+    @keyframes pet-curious { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 42% { transform: translateX(calc(-50% - 5px)) translateY(-7px) rotate(-2.8deg); } 70% { transform: translateX(calc(-50% - 2px)) translateY(-3px) rotate(-1.1deg); } }
+    @keyframes pet-hop { 0% { transform: translateX(-50%) translateY(0) scale(1); } 24% { transform: translateX(-50%) translateY(3px) scale(1.04,.96); } 54% { transform: translateX(-50%) translateY(-25px) rotate(-3.2deg) scale(.98,1.04); } 71% { transform: translateX(-50%) translateY(-12px) rotate(2deg) scale(1.01,.99); } 88% { transform: translateX(-50%) translateY(2px) scale(1.055,.94); } 100% { transform: translateX(-50%) translateY(0) scale(1); } }
+    @keyframes pet-cheer { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0) scale(1); } 17% { transform: translateX(calc(-50% - 4px)) translateY(-17px) rotate(-7deg) scale(.99,1.03); } 34% { transform: translateX(calc(-50% + 4px)) translateY(-2px) rotate(6deg) scale(1.04,.96); } 55% { transform: translateX(calc(-50% - 3px)) translateY(-20px) rotate(-5deg) scale(.98,1.04); } 75% { transform: translateX(calc(-50% + 2px)) translateY(-3px) rotate(3deg) scale(1.03,.97); } 90% { transform: translateX(-50%) translateY(2px) scale(1.05,.95); } }
+    @keyframes pet-peek { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 26% { transform: translateX(calc(-50% - 13px)) translateY(-5px) rotate(-5deg); } 56% { transform: translateX(calc(-50% - 8px)) translateY(-8px) rotate(-3deg); } 78% { transform: translateX(calc(-50% - 2px)) translateY(-3px) rotate(-1deg); } }
+    @keyframes pet-listening { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0); } 28% { transform: translateX(calc(-50% + 3px)) translateY(-5px) rotate(2.2deg); } 58% { transform: translateX(calc(-50% - 2px)) translateY(-3px) rotate(-1.4deg); } }
+    @keyframes pet-heart { 0%,100% { transform: translateX(-50%) translateY(0) rotate(0) scale(1); } 42% { transform: translateX(-50%) translateY(-5px) rotate(-1.2deg) scale(1.025); } 68% { transform: translateX(-50%) translateY(-2px) rotate(.9deg) scale(1.01); } }
+    @keyframes grounded-shadow { 0%,100% { transform: translateX(-50%) scaleX(.92); opacity: .58; } 48% { transform: translateX(-50%) scaleX(.8); opacity: .38; } }
+    @keyframes pet-shadow-hop { 0%,100% { transform: translateX(-50%) scaleX(.92); opacity: .55; } 50% { transform: translateX(-50%) scaleX(.55); opacity: .22; } 88% { transform: translateX(-50%) scaleX(1.08); opacity: .65; } }
+    @keyframes heart-glow { 0%,100% { transform: translateX(-50%) scale(.76); opacity: .55; } 48% { transform: translateX(-50%) scale(1.22); opacity: 1; } }
+    @keyframes listening-ring { 0%,14% { transform: translateX(-50%) scale(.8); opacity: 0; } 24% { opacity: .58; } 56% { transform: translateX(-50%) scale(1.16); opacity: 0; } 100% { transform: translateX(-50%) scale(1.16); opacity: 0; } }
+    @keyframes pet-halo-listen { 0%,100% { transform: translateX(-50%) scale(1); opacity: .82; } 50% { transform: translateX(-50%) scale(1.09); opacity: 1; } }
+    @keyframes pet-wave-spark { 0% { transform: translate(-6px,11px) scale(.48) rotate(-20deg); opacity: 0; } 27% { opacity: .9; } 80% { transform: translate(13px,-14px) scale(1.08) rotate(18deg); opacity: 0; } 100% { opacity: 0; } }
+    @keyframes pet-hop-spark { 0% { transform: translate(0,8px) scale(.45) rotate(0); opacity: 0; } 24% { opacity: .96; } 88% { transform: translate(var(--spark-x, 12px), -34px) scale(1.05) rotate(65deg); opacity: 0; } 100% { opacity: 0; } }
+    @keyframes pet-cheer-spark { 0% { transform: translate(0,9px) scale(.38) rotate(0); opacity: 0; } 22% { opacity: .94; } 82% { transform: translate(var(--spark-x, 16px), -42px) scale(1.18) rotate(105deg); opacity: 0; } 100% { opacity: 0; } }
+    @keyframes pet-peek-spark { 0%,100% { transform: translate(0,5px) scale(.55); opacity: 0; } 45% { transform: translate(8px,-13px) scale(1); opacity: .88; } }
+    @keyframes pet-listen-spark { 0%,100% { transform: translate(0,4px) scale(.66); opacity: 0; } 46% { transform: translate(-9px,-9px) scale(1); opacity: .86; } }
+    @keyframes pet-heart-spark { 0% { transform: translate(0,8px) scale(.34); opacity: 0; } 25% { opacity: .9; } 85% { transform: translate(var(--spark-x, 12px), -35px) scale(1.1); opacity: 0; } 100% { opacity: 0; } }
+    @keyframes mascot-answer { 0% { transform: translateX(-50%) translateY(0) rotate(0); } 35% { transform: translateX(-50%) translateY(-13px) rotate(-2deg); } 68% { transform: translateX(-50%) translateY(0) rotate(1.5deg); } 100% { transform: translateX(-50%) translateY(0) rotate(0); } }
+    @keyframes pet-dialogue-pop { 0% { opacity: 0; transform: translateY(7px) scale(.9); } 62% { opacity: 1; transform: translateY(-2px) scale(1.035); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes wave { 0%,100% { transform: scaleY(.48); } 50% { transform: scaleY(1); } }
+    @keyframes mote { 0%,100% { transform: translateY(0); opacity: .44; } 50% { transform: translateY(-14px); opacity: .95; } }
+    @keyframes toast-in { from { opacity: 0; transform: translate(-50%,-7px); } to { opacity: 1; transform: translate(-50%,0); } }
+    @media (min-width: 431px) { body { background: radial-gradient(circle at 50% 17%, #fff8f5, #f0e2db 72%); }.app { box-shadow: 0 25px 65px rgba(118,78,85,.13); } }
+    @media (max-height: 720px) { .topbar { min-height: 50px; }.mascot-stage { height: 204px; }.waveform { height: 20px; margin-bottom: 6px; }.listen-button { min-height: 51px; }.home-actions { margin-top: 8px; }.body-overview { margin-top: 22px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+    .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  </style>
+</head>
+<body>
+  <main class="app" id="app" aria-label="同频小频陪伴轻应用">
+    <div class="grain" aria-hidden="true"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <section class="home" aria-label="同频小频陪伴">
+      <header class="topbar">
+        <button class="quick-volunteer" type="button" data-open="support" aria-label="进入找志愿者入口"><span aria-hidden="true">🤝</span>找志愿者</button>
+        <button class="round-control" type="button" data-open="profile" aria-label="查看隐私与设置">⌁</button>
+      </header>
+      <section class="mascot-stage is-pet-idle" aria-label="小频正在安静陪伴">
+        <div class="mascot-halo" aria-hidden="true"></div>
+        <p class="pet-dialogue" id="petGreeting" aria-hidden="true">小频在这里</p>
+        <div class="mascot-shadow" aria-hidden="true"></div>
+        <button class="mascot is-pet-idle" id="mascot" type="button" aria-label="小频正在安静陪伴，轻触开始聊天">
+          <div class="mascot-core">
+            <img class="mascot-sprite idle" src="./assets/xiaopin-idle-v1.png" alt="小频睁着眼睛安静陪伴">
+            <img class="mascot-sprite wave" src="./assets/xiaopin-wave.png" alt="小频睁着眼睛向你招手">
+            <img class="mascot-sprite curious" src="./assets/xiaopin-curious-v1.png" alt="小频歪着头，认真地倾听">
+            <img class="mascot-sprite cheer" src="./assets/xiaopin-cheer-v1.png" alt="小频举起双手为你打气">
+            <img class="mascot-sprite heart" src="./assets/xiaopin-heart-v1.png" alt="小频抱着一颗心回应你">
+          </div>
+          <span class="pet-particle one" aria-hidden="true">✦</span>
+          <span class="pet-particle two" aria-hidden="true">♡</span>
+          <span class="pet-particle three" aria-hidden="true">✦</span>
+        </button>
+      </section>
+      <section class="home-copy">
+        <div class="waveform" id="waveform" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="listen-button" type="button" id="listenButton"><span class="listen-icon" aria-hidden="true">💬</span><span>和小频聊聊</span><span class="listen-arrow" aria-hidden="true">›</span></button>
+        <div class="home-actions" aria-label="更多用户端功能">
+          <button class="home-action" type="button" data-open="care"><span class="home-action-icon" aria-hidden="true">🫶</span>身体关怀</button>
+          <button class="home-action" type="button" data-open="exercise"><span class="home-action-icon" aria-hidden="true">🧘</span>轻柔跟练</button>
+          <button class="home-action" type="button" data-open="community"><span class="home-action-icon" aria-hidden="true">👥</span>看看社区</button>
+        </div>
+      </section>
+      <section class="body-overview" aria-labelledby="bodyOverviewTitle">
+        <div class="body-overview-head">
+          <div><span class="body-overview-kicker">身体与节律</span><h2 id="bodyOverviewTitle">今天的身体指标</h2><p>刚刚同步</p></div>
+          <button class="metric-refresh" id="refreshDemoMetrics" type="button" aria-label="刷新当前身体指标" title="刷新当前数据">↻</button>
+        </div>
+        <button class="home-metric-card" id="homeMetricCard" type="button" data-open="device" aria-label="查看当前身体指标与趋势" aria-busy="true">
+          <span class="home-metric-meta"><span>✦ <span id="homeMetricScenario">正在同步当前数据</span></span><span id="homeMetricSource">刚刚更新</span></span>
+          <span class="home-metric-grid" id="homeMetrics" aria-live="polite"></span>
+          <span class="home-trend"><span class="home-trend-head"><strong>近 7 天活动节律</strong><span id="homeTrendCaption">正在同步</span></span><span class="home-mini-bars" id="homeMetricTrend" aria-hidden="true"></span></span>
+        </button>
+      </section>
+    </section>
+
+    <nav class="tabbar" aria-label="主导航">
+      <button class="tab is-active" type="button" data-home aria-current="page"><span class="tab-icon" aria-hidden="true"><i class="fa-solid fa-house"></i></span><span>陪伴</span></button>
+      <button class="tab" type="button" data-open="community"><span class="tab-icon" aria-hidden="true"><i class="fa-solid fa-people-group"></i></span><span>社区</span></button>
+      <button class="tab" type="button" data-open="profile"><span class="tab-icon" aria-hidden="true"><i class="fa-solid fa-user"></i></span><span>我的</span></button>
+    </nav>
+
+    <div class="scrim" id="scrim"></div>
+    <section class="panel" id="chatPanel" data-panel="chat" role="dialog" aria-modal="true" aria-labelledby="chatTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><img class="panel-mascot" src="./assets/xiaopin-wave.png" alt="小频"><div><h2 id="chatTitle">我在这里</h2><p>慢一点说，也没关系。</p></div><button class="close" type="button" data-close aria-label="关闭对话">×</button></header>
+      <div class="safety-strip"><b aria-hidden="true">!</b><span>如果此刻不安全，可以直接找现实中的帮助，不必先回答更多问题。</span><button type="button" data-open="safety">查看</button></div>
+      <div class="eyebrow">直接说给小频听</div>
+      <div class="message-list" id="messages" aria-live="polite"><div class="message"><small>小频</small>想说什么都可以，我在听。</div></div>
+      <div class="prompt-row" aria-label="快捷表达"><button class="prompt" type="button" data-message="我有点乱">我有点乱</button><button class="prompt" type="button" data-message="我不想一个人">我不想一个人</button><button class="prompt" type="button" data-message="我想先安静一下">我想先安静一下</button></div>
+      <form class="composer" id="composer" aria-label="输入一句话"><input id="messageInput" type="text" maxlength="500" placeholder="写下一句就好"><button class="send" type="submit" aria-label="发送">↑</button></form>
+      <div class="chat-footer-links"><span class="chat-hint">不用组织好语言</span><button class="soft-link" type="button" data-open="questionnaire">做个可选自评</button><button class="soft-link" type="button" data-open="support">找志愿者</button></div>
+    </section>
+    <section class="panel" id="communityPanel" data-panel="community" role="dialog" aria-modal="true" aria-labelledby="communityTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><div><h2 id="communityTitle">同频小社区</h2><p>看看大家留下的一点温柔。</p></div><button class="close" type="button" data-close aria-label="关闭社区">×</button></header>
+      <section class="community-welcome" aria-label="社区说明"><span aria-hidden="true">🌿</span><div><strong>今天也有人在这里</strong><p>来自志愿者、家人和朋友的固定示例内容。</p></div></section>
+      <div class="community-feed" aria-label="社区示例内容">
+        <article class="community-post is-volunteer"><header><span class="community-avatar" aria-hidden="true">🧑‍💼</span><div><strong>榆枝</strong><small>志愿者 · 09:40</small></div><span class="community-tag">陪伴</span></header><p>今天不想解释也没关系。想说一句，就从一句开始。</p></article>
+        <article class="community-post is-family"><header><span class="community-avatar" aria-hidden="true">🏡</span><div><strong>小满</strong><small>家人 · 12:18</small></div><span class="community-tag">惦记</span></header><p>晚饭会给你留着。等你有空，再和我们说说今天也可以。</p></article>
+        <article class="community-post is-friend"><header><span class="community-avatar" aria-hidden="true">🍊</span><div><strong>柚子</strong><small>朋友 · 16:26</small></div><span class="community-tag">一起</span></header><p>下午路过那家店，想起你。想散步的话，发个表情就好。</p></article>
+      </div>
+    </section>
+    <section class="panel" id="profilePanel" data-panel="profile" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><div><h2 id="profileTitle">你的边界，由你决定</h2><p>同频只在被允许时参与陪伴。</p></div><button class="close" type="button" data-close aria-label="关闭我的">×</button></header>
+      <div class="setting-list">
+        <button class="setting" type="button" data-open="device"><span><strong>设备与趋势</strong><small>心率、HRV、睡眠与活动的来源和质量</small></span><b class="sage">可选</b></button>
+        <button class="setting" type="button" data-open="support"><span><strong>人工支持与资源</strong><small>发起请求，或查看现实中的帮助渠道</small></span><b>可控</b></button>
+        <button class="setting" type="button" data-open="safety"><span><strong>即时安全入口</strong><small>当前不安全时，绕过日常问候和练习</small></span><b class="sage">始终可达</b></button>
+      </div>
+      <div class="section-label">可选资料</div>
+      <div class="field-list"><div class="field"><label for="nickname">昵称（可不填）</label><input id="nickname" type="text" maxlength="24" placeholder="只在本机显示"></div><div class="field"><label for="ageBand">年龄段（用于适配表达，可跳过）</label><select id="ageBand"><option value="">不想填写</option><option value="12-13">12–13 岁</option><option value="14-17">14–17 岁</option><option value="18+">18 岁及以上</option></select></div></div>
+      <div class="notice" id="minorGuardian" hidden><strong>12–13 岁监护流程演示</strong>设备指标和趋势分享需要先完成监护知情同意演示；不同意也不影响聊天、日记、现实资源和主动求助。正式使用前仍需机构完成监护人身份与单独同意流程。</div>
+      <label class="check-row" id="guardianConsentRow" hidden><input id="guardianConsent" type="checkbox">我已获得监护人知情同意（仅用于本次演示）</label>
+      <button class="primary-action" type="button" id="saveProfile" style="width:100%;margin-top:13px;">保存我的偏好</button>
+      <div class="section-label">分开管理授权</div>
+      <div class="consent-list"><div class="consent-row"><span><strong>设备指标</strong><small>允许读取当前设备数据；无设备也不影响求助</small></span><button class="switch is-on" type="button" data-consent="device_metrics" aria-label="切换设备指标授权"></button></div><div class="consent-row"><span><strong>活动关怀提醒</strong><small>活动减少只触发问候，不代表疾病告警</small></span><button class="switch" type="button" data-consent="activity_reminder" aria-label="切换活动关怀提醒"></button></div><div class="consent-row"><span><strong>趋势摘要分享</strong><small>不默认分享原始连续设备数据</small></span><button class="switch" type="button" data-consent="trend_summary_share" aria-label="切换趋势摘要分享"></button></div><div class="consent-row"><span><strong>内容分享</strong><small>由你决定是否分享个人内容</small></span><button class="switch" type="button" data-consent="diary_share" aria-label="切换内容分享"></button></div></div>
+      <div class="section-label">显示偏好</div>
+      <div class="consent-list"><div class="consent-row"><span><strong>减少动效</strong><small>保留清晰反馈，关闭装饰性动画</small></span><button class="switch" type="button" id="motionSwitch" aria-label="切换减少动效"></button></div></div>
+      <div class="notice"><strong>匿名身份与数据</strong>当前使用匿名用户会话；内容按后端权限保存，刷新页面会继续使用当前浏览器中的匿名身份。清除站点数据后会重新开始。你可以随时撤回可选授权或分享。</div>
+      <div class="notice"><strong>添加到 iPhone 主屏幕</strong>请在 Safari 点按“分享”，选择“添加到主屏幕”。添加后会以独立轻应用方式打开。</div>
+    </section>
+    <section class="panel" id="devicePanel" data-panel="device" role="dialog" aria-modal="true" aria-labelledby="deviceTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><img class="panel-mascot" src="./assets/xiaopin-calm.png" alt="小频"><div><h2 id="deviceTitle">身体指标</h2><p>当前数据与近 7 天变化。</p></div><button class="close" type="button" data-close aria-label="关闭身体指标">×</button></header>
+      <div class="metric-grid" id="deviceMetrics"><div class="metric"><small>心率</small><strong>72 bpm</strong><span>刚刚同步</span></div><div class="metric"><small>HRV</small><strong>48 ms</strong><span>刚刚同步</span></div><div class="metric"><small>睡眠</small><strong>6h 42m</strong><span>昨夜记录</span></div><div class="metric"><small>活动</small><strong>4,820 步</strong><span>今天累计</span></div></div>
+      <div class="trend-card"><div class="trend-head"><strong>近 7 天活动</strong><span>当前同步</span></div><div class="bars" aria-label="近七天活动趋势"><span class="bar" style="--bar:54px"><i>一</i></span><span class="bar" style="--bar:68px"><i>二</i></span><span class="bar" style="--bar:44px"><i>三</i></span><span class="bar" style="--bar:75px"><i>四</i></span><span class="bar" style="--bar:61px"><i>五</i></span><span class="bar" style="--bar:50px"><i>六</i></span><span class="bar" style="--bar:71px"><i>日</i></span></div><div class="quality-line"><span class="quality-dot"></span>已同步到当前设备</div></div>
+      <div class="panel-actions"><button class="primary-action" type="button" data-open="care">看看今天的活动关怀</button><button class="secondary-action" type="button" data-close>返回首页</button></div>
+    </section>
+    <section class="panel" id="carePanel" data-panel="care" role="dialog" aria-modal="true" aria-labelledby="careTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><img class="panel-mascot" src="./assets/xiaopin-wave.png" alt="小频"><div><h2 id="careTitle">活动关怀</h2><p>先问问情境，再决定要不要动一动。</p></div><button class="close" type="button" data-close aria-label="关闭活动关怀">×</button></header>
+      <div class="care-card"><h3>今天的活动少一点</h3><p>这只是一条需要确认的线索，不是疾病告警。你可以告诉我现在的情境，我会尊重你的选择。</p><div class="choice-grid" id="careChoices"><button class="choice" type="button" data-care="work">学习 / 工作<small>先不打扰</small></button><button class="choice" type="button" data-care="rest">正在休息<small>稍后再说</small></button><button class="choice" type="button" data-care="unwell">身体不舒服<small>不推运动</small></button><button class="choice" type="button" data-care="low">提不起劲<small>可以聊聊或找人</small></button><button class="choice wide" type="button" data-care="willing">我愿意活动一下<small>只做舒服、短时间的尝试</small></button></div></div>
+      <div class="notice" id="careNotice"><strong>提醒可以暂停</strong>学习、休息、轮班、行动不便或暂时没戴设备，都不等于“不配合”。</div>
+    </section>
+    <section class="panel" id="exercisePanel" data-panel="exercise" role="dialog" aria-modal="true" aria-labelledby="exerciseTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><img class="panel-mascot" src="./assets/xiaopin-wave.png" alt="小频"><div><h2 id="exerciseTitle">自愿舒缓跟练</h2><p>舒服就继续，不舒服就停。</p></div><button class="close" type="button" data-close aria-label="关闭舒缓跟练">×</button></header>
+      <div id="exerciseChooser"><p class="panel-copy">先确认<strong>当前安全且愿意尝试</strong>。不需要闭眼、不用力深呼吸，也不必完成全部步骤。</p><div class="exercise-picker"><button class="exercise-card is-selected" type="button" data-exercise="breathing"><span class="exercise-symbol" aria-hidden="true">◌</span><span><strong>轻柔呼吸</strong><small>跟着舒服的节奏，不憋气</small></span><em>约 1 分钟</em></button><button class="exercise-card" type="button" data-exercise="grounding"><span class="exercise-symbol" aria-hidden="true">✦</span><span><strong>看看周围</strong><small>找找眼前的颜色和形状</small></span><em>约 1 分钟</em></button><button class="exercise-card" type="button" data-exercise="relax"><span class="exercise-symbol" aria-hidden="true">⌁</span><span><strong>放松肩手</strong><small>只做不痛、不过度的幅度</small></span><em>约 1 分钟</em></button></div><label class="check-row"><input id="exerciseSafe" type="checkbox">我现在安全，也愿意试试。任何不适都可以暂停、跳过或停止。</label><div class="panel-actions"><button class="primary-action" type="button" id="startExercise">开始这一小段</button><button class="secondary-action" type="button" data-open="support">练习中更不舒服？直接找人</button></div></div>
+      <div id="exerciseRunning" hidden><div class="exercise-stage" id="exerciseStage"><div><div class="exercise-ring"><strong id="exerciseTimer">60</strong></div><p id="exerciseCue">跟着舒服的节奏就好</p></div></div><div class="action-row"><button type="button" id="pauseExercise">暂停</button><button type="button" id="skipExercise">跳过</button><button type="button" id="stopExercise">停止</button><button class="primary" type="button" id="completeExercise">完成这一小段</button></div><div class="notice"><strong>小频不会替你判断状态</strong>练习结果不会自动写入日记、分享或生成结论。</div></div>
+    </section>
+    <section class="panel" id="supportPanel" data-panel="support" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><img class="panel-mascot" src="./assets/xiaopin-wave.png" alt="小频"><div><h2 id="supportTitle">找现实中的人</h2><p>请求由你发起，等待接收会明确显示。</p></div><button class="close" type="button" data-close aria-label="关闭人工支持">×</button></header>
+      <div id="supportRequest"><p class="panel-copy">你可以先选择希望得到的支持。人工请求不要求先分享日记，也不要求上传设备数据。</p><div class="choice-grid" id="supportChoices"><button class="choice is-selected" type="button" data-support-kind="peer">有人听听<small>文字陪伴请求</small></button><button class="choice" type="button" data-support-kind="professional">专业帮助<small>转入人工专业路径</small></button><button class="choice wide" type="button" data-support-kind="trusted">可信任的人<small>由你自行联系或讨论联系人计划</small></button></div><div class="section-label">本次只分享什么？</div><div class="consent-list"><div class="consent-row"><span><strong>当前需要</strong><small>必需：告诉接收者你想获得哪种支持</small></span><span class="status-pill is-confirmed">仅必要</span></div><div class="consent-row"><span><strong>日记摘要</strong><small>可选：不会默认带上日记正文</small></span><button class="switch" type="button" data-support-share="diary" aria-label="切换日记摘要分享"></button></div><div class="consent-row"><span><strong>设备趋势摘要</strong><small>可选：不会默认分享原始连续数据</small></span><button class="switch" type="button" data-support-share="device" aria-label="切换设备趋势摘要分享"></button></div></div><div class="panel-actions"><button class="primary-action" type="button" id="requestSupport">发起人工支持请求</button><button class="secondary-action" type="button" data-open="resources">先看看现实资源</button></div></div>
+      <div id="supportPending" hidden><div class="support-state is-pending"><strong>请求已发起，正在等待接收</strong><p>这表示请求已经提交，不代表已有志愿者或专业人员接管。页面会保留“等待接收”的状态。</p><div class="support-timeline"><span class="support-step is-done">已经发起</span><span class="support-step">等待接收</span><span class="support-step">具名接收</span></div></div><div class="panel-actions"><button class="secondary-action" type="button" data-open="resources">查看现实支持渠道</button><button class="secondary-action" type="button" data-open="chat">继续和小频聊聊</button></div></div>
+      <div class="notice"><strong>没有设备、未授权或暂时离线，也不影响主动求助。</strong>演示不会自动拨号、联系家属或宣称已经有真人在线。</div>
+    </section>
+    <section class="panel" id="safetyPanel" data-panel="safety" role="dialog" aria-modal="true" aria-labelledby="safetyTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><div><h2 id="safetyTitle">先照顾眼前的安全</h2><p>不需要完成日记、问卷或设备授权。</p></div><button class="close" type="button" data-close aria-label="关闭即时安全入口">×</button></header>
+      <div class="safety-strip"><b aria-hidden="true">!</b><span>如果你现在有伤害自己或他人的想法、已经受伤、服药过量，或无法保证此刻安全，请优先联系当地急救服务或身边可信任的人。</span></div>
+      <div class="choice-grid" id="safetyChoices"><button class="choice wide" type="button" data-safety-choice="unsafe">我现在不安全，查看现实支持<small>会保留即时安全求助状态</small></button><button class="choice" type="button" data-safety-choice="unsure">我不确定<small>先看渠道，也可以找人</small></button><button class="choice" type="button" data-safety-choice="safe">我现在安全<small>继续陪伴</small></button></div>
+      <div class="notice"><strong>小频不能代替专业判断</strong>页面不会自动报警、外呼或通知家属。若存在现实危险，请立刻使用所在地的急救服务，并尽量让可信任的人陪在身边。</div>
+    </section>
+    <section class="panel" id="resourcesPanel" data-panel="resources" role="dialog" aria-modal="true" aria-labelledby="resourcesTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><div><h2 id="resourcesTitle">现实支持渠道</h2><p>示例资源，请按所在地和当下情况核验。</p></div><button class="close" type="button" data-close aria-label="关闭现实支持渠道">×</button></header>
+      <div class="resource-list" id="resourceList"><article class="resource-card"><header><strong>紧急医疗与公共安全</strong><span>立即危险</span></header><p>如果已经受伤、服药过量，或无法保证安全，请联系所在地急救服务或公共安全服务，并让可信任的人陪同。</p><button type="button" data-toast="演示中不自动拨号，请按所在地核验号码">查看联系方式</button></article><article class="resource-card"><header><strong>心理援助热线</strong><span>上海示例</span></header><p>12356 与上海 962525 可作为心理热线示例节点。使用前请核对所在地、服务时间与当前号码。</p><button type="button" data-toast="请按所在地核验心理热线号码与服务时间">核验资源</button></article><article class="resource-card"><header><strong>身边可信任的人</strong><span>由你选择</span></header><p>可以请朋友、家人、老师或其他可信任的人陪你待在安全的地方。应用不会在你不知情时替你通知他人。</p><button type="button" data-open="support">讨论人工支持</button></article></div>
+      <div class="notice"><strong>同频不是医疗或急救服务</strong>这些渠道仅作现实支持入口展示，不代表同频已经与热线、医院或急救系统建立接口。</div>
+    </section>
+    <section class="panel" id="questionnairePanel" data-panel="questionnaire" role="dialog" aria-modal="true" aria-labelledby="questionnaireTitle">
+      <div class="panel-handle"></div>
+      <header class="panel-head"><div><h2 id="questionnaireTitle">可选自评</h2><p>可以跳过，不生成诊断或风险等级。</p></div><button class="close" type="button" data-close aria-label="关闭可选自评">×</button></header>
+      <div class="safety-strip"><b aria-hidden="true">♡</b><span>如果此刻不安全，请直接进入即时安全支持，不要等待自评完成。</span><button type="button" data-open="safety">安全入口</button></div>
+      <div id="questionnaireQuestions"><div class="notice"><strong>正在加载可选问卷</strong>请稍等片刻。</div></div>
+      <div class="panel-actions"><button class="primary-action" type="button" id="submitQuestionnaire">记录这次回答</button><button class="secondary-action" type="button" data-action="skip-questionnaire">跳过，继续聊聊</button></div>
+      <div class="notice" id="questionnaireNotice"><strong>可选回答</strong>这是产品演示中的感受记录，不是正式施测，不会直接转换为支持分层或转诊结论。</div>
+    </section>
+  </main>
+
+  <script src="./api.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -25,7 +25,7 @@ export class AuthService {
     ageBand: string;
     districtId: string;
     displayName?: string;
-  }): Promise<{ token: string; user: Record<string, unknown>; expiresAt: Date }> {
+  }): Promise<{ token: string; refreshToken: string; user: Record<string, unknown>; expiresAt: Date }> {
     const allowedAgeBands = ['12-13', '14-17', '18+'];
     if (!allowedAgeBands.includes(input.ageBand)) {
       throw errors.validation('age_band 必须为 12-13、14-17 或 18+');
@@ -57,7 +57,7 @@ export class AuthService {
     const [user] = await this.database
       .query('SELECT * FROM users WHERE id = ?', [userId])
       .then(([rows]) => rows as any[]);
-    return { token, user, expiresAt };
+    return { token, refreshToken: refresh, user, expiresAt };
   }
 
   async loginStaff(account: string, password: string): Promise<SessionTokens> {
