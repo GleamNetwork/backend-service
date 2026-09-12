@@ -58,10 +58,10 @@
   const petStateClasses = Object.values(petStates).map((item) => item.className);
 
   const demoMetricProfiles = [
-    { id: 'daybreak', name: '晨间节律', sync: '模拟手表 · 10:24', quality: '有效佩戴 7小时48分', heart: 69, hrv: 52, sleep: 431, steps: 1360, active: 14, trend: [48, 61, 55, 68, 63, 72, 58] },
-    { id: 'midday', name: '午后片刻', sync: '模拟手表 · 14:06', quality: '有效佩戴 8小时12分', heart: 74, hrv: 46, sleep: 408, steps: 4680, active: 41, trend: [54, 70, 67, 58, 76, 64, 73] },
-    { id: 'weekend', name: '周末步调', sync: '模拟手表 · 11:38', quality: '有效佩戴 9小时03分', heart: 66, hrv: 58, sleep: 487, steps: 3120, active: 27, trend: [45, 52, 62, 49, 57, 66, 60] },
-    { id: 'evening', name: '傍晚回看', sync: '模拟手表 · 18:42', quality: '有效佩戴 10小时21分', heart: 71, hrv: 44, sleep: 454, steps: 6430, active: 53, trend: [63, 58, 71, 66, 74, 61, 77] }
+    { id: 'daybreak', name: '晨间节律', sync: '模拟手表 · 10:24', quality: '有效佩戴 7小时48分', heart: 69, hrv: 52, sleep: 431, steps: 1360, active: 14, energy: 760, medication: { status: '已服用', hint: '08:00' }, trend: [48, 61, 55, 68, 63, 72, 58] },
+    { id: 'midday', name: '午后片刻', sync: '模拟手表 · 14:06', quality: '有效佩戴 8小时12分', heart: 74, hrv: 46, sleep: 408, steps: 4680, active: 41, energy: 1180, medication: { status: '待服用', hint: '20:00' }, trend: [54, 70, 67, 58, 76, 64, 73] },
+    { id: 'weekend', name: '周末步调', sync: '模拟手表 · 11:38', quality: '有效佩戴 9小时03分', heart: 66, hrv: 58, sleep: 487, steps: 3120, active: 27, energy: 960, medication: { status: '已服用', hint: '09:00' }, trend: [45, 52, 62, 49, 57, 66, 60] },
+    { id: 'evening', name: '傍晚回看', sync: '模拟手表 · 18:42', quality: '有效佩戴 10小时21分', heart: 71, hrv: 44, sleep: 454, steps: 6430, active: 53, energy: 1460, medication: { status: '待确认', hint: '20:00' }, trend: [63, 58, 71, 66, 74, 61, 77] }
   ];
 
   const exerciseCopy = {
@@ -552,6 +552,7 @@
     const sleep = Math.max(300, profile.sleep + randomInteger(-13, 13));
     const steps = Math.max(480, profile.steps + randomInteger(-620, 620));
     const active = Math.max(6, profile.active + randomInteger(-7, 8));
+    const energy = Math.max(480, profile.energy + randomInteger(-90, 90));
     return {
       ...profile,
       heart,
@@ -559,6 +560,7 @@
       sleep,
       steps,
       active,
+      energy,
       trend: profile.trend.map((value) => Math.max(28, Math.min(88, value + randomInteger(-6, 6))))
     };
   }
@@ -566,27 +568,20 @@
   function renderHomeMetrics() {
     const metrics = document.querySelector('#homeMetrics');
     const card = document.querySelector('#homeMetricCard');
-    const scenario = document.querySelector('#homeMetricScenario');
-    const source = document.querySelector('#homeMetricSource');
-    const trend = document.querySelector('#homeMetricTrend');
-    const trendCaption = document.querySelector('#homeTrendCaption');
-    if (!metrics || !card || !scenario || !source || !trend || !trendCaption) return;
+    if (!metrics || !card) return;
     if (!state.demoMetrics) state.demoMetrics = createDemoMetrics();
     const snapshot = state.demoMetrics;
     const cards = [
       { emoji: '❤️', label: '心率', value: snapshot.heart, unit: 'bpm', hint: '静坐 · 刚刚' },
       { emoji: '🫧', label: 'HRV', value: snapshot.hrv, unit: 'ms', hint: '刚刚同步' },
       { emoji: '😴', label: '睡眠', value: formatSleep(snapshot.sleep), unit: '', hint: '昨夜记录' },
-      { emoji: '👟', label: '活动', value: snapshot.steps.toLocaleString('zh-CN'), unit: '步', hint: snapshot.active + ' 分钟活动' }
+      { emoji: '👟', label: '活动', value: snapshot.steps.toLocaleString('zh-CN'), unit: '步', hint: snapshot.active + ' 分钟活动' },
+      { emoji: '🔥', label: '能量消耗', value: snapshot.energy, unit: 'kcal', hint: '今天累计' },
+      { emoji: '💊', label: '用药', value: snapshot.medication.status, unit: '', hint: snapshot.medication.hint }
     ];
     metrics.innerHTML = cards.map((item) => '<span class="home-metric"><span class="home-metric-top"><b aria-hidden="true">' + item.emoji + '</b>' + item.label + '</span><strong>' + escapeHtml(item.value) + (item.unit ? '<small>' + escapeHtml(item.unit) + '</small>' : '') + '</strong><em>' + escapeHtml(item.hint) + '</em></span>').join('');
-    const days = ['一', '二', '三', '四', '五', '六', '日'];
-    trend.innerHTML = snapshot.trend.map((value, index) => '<span class="home-mini-bar" style="--metric-bar:' + Math.round(value * .43) + 'px"><i>' + days[index] + '</i></span>').join('');
-    scenario.textContent = '当前数据';
-    source.textContent = '刚刚更新';
-    trendCaption.textContent = '今天 ' + snapshot.steps.toLocaleString('zh-CN') + ' 步';
     card.setAttribute('aria-busy', 'false');
-    card.setAttribute('aria-label', '当前身体指标：心率 ' + snapshot.heart + ' bpm，HRV ' + snapshot.hrv + ' ms，睡眠 ' + formatSleep(snapshot.sleep) + '，活动 ' + snapshot.steps.toLocaleString('zh-CN') + ' 步。查看近 7 天变化');
+    card.setAttribute('aria-label', '当前身体指标：心率 ' + snapshot.heart + ' bpm，HRV ' + snapshot.hrv + ' ms，睡眠 ' + formatSleep(snapshot.sleep) + '，活动 ' + snapshot.steps.toLocaleString('zh-CN') + ' 步，能量消耗 ' + snapshot.energy + ' 千卡，用药状态 ' + snapshot.medication.status);
   }
 
   function renderDevice() {
@@ -598,7 +593,9 @@
       ['心率', snapshot.heart + ' bpm', '刚刚同步'],
       ['HRV', snapshot.hrv + ' ms', '刚刚同步'],
       ['睡眠', formatSleep(snapshot.sleep), '昨夜记录'],
-      ['活动', snapshot.steps.toLocaleString('zh-CN') + ' 步', '今天 ' + snapshot.active + ' 分钟']
+      ['活动', snapshot.steps.toLocaleString('zh-CN') + ' 步', '今天 ' + snapshot.active + ' 分钟'],
+      ['能量消耗', snapshot.energy + ' kcal', '今天累计'],
+      ['用药状态', snapshot.medication.status, snapshot.medication.hint]
     ];
     metrics.innerHTML = currentMetrics.map(([label, value, stamp]) => '<div class="metric"><small>' + label + '</small><strong>' + escapeHtml(value) + '</strong><span>' + escapeHtml(stamp) + '</span></div>').join('');
     const bars = document.querySelector('.bars');
@@ -949,6 +946,7 @@
   document.querySelector('#refreshDemoMetrics').addEventListener('click', () => {
     state.demoMetrics = createDemoMetrics(state.demoMetrics && state.demoMetrics.id);
     renderHomeMetrics();
+    renderDevice();
   });
   mascot.addEventListener('click', invite);
   mascot.addEventListener('pointerenter', (event) => {

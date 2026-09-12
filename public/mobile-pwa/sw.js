@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tongpin-pwa-v34';
+const CACHE_NAME = 'tongpin-pwa-v37';
 const APP_SHELL = [
   './',
   './index.html',

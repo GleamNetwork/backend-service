@@ -74,7 +74,7 @@
       mask-image: linear-gradient(to bottom, rgba(0,0,0,.3), transparent 42%);
     }
 
-    .home { height: 100dvh; min-height: 100dvh; padding: calc(10px + env(safe-area-inset-top)) 22px calc(116px + env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; }
+    .home { height: 100dvh; min-height: 100dvh; padding: calc(8px + env(safe-area-inset-top)) 22px calc(88px + env(safe-area-inset-bottom)); overflow: hidden; overscroll-behavior-y: contain; scrollbar-width: none; }
     .home::-webkit-scrollbar { display: none; }
     .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
     .quick-volunteer { display: inline-flex; align-items: center; gap: 7px; min-height: 41px; padding: 0 15px; border: 1px solid rgba(231,151,140,.3); border-radius: 15px; background: rgba(255,245,241,.88); box-shadow: 0 7px 16px rgba(165,97,99,.1), inset 0 1px 0 rgba(255,255,255,.92); color: #9f565d; cursor: pointer; font-size: 13px; font-weight: 800; letter-spacing: -.02em; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
@@ -95,7 +95,7 @@
     }
     .round-control:active { transform: scale(.92); }.round-control:hover { background: rgba(255,253,250,.9); }
 
-    .mascot-stage { position: relative; height: clamp(232px, 33dvh, 296px); margin: -5px -22px 0; overflow: visible; }
+    .mascot-stage { position: relative; height: clamp(178px, 27dvh, 232px); margin: -5px -22px 0; overflow: visible; }
     .mascot-halo {
       position: absolute;
       top: 8%;
@@ -145,7 +145,7 @@
       z-index: 1;
       bottom: 0;
       left: 50%;
-      width: min(64vw, 268px);
+      width: min(54vw, 218px);
       aspect-ratio: 1;
       padding: 0;
       border: 0;
@@ -301,24 +301,21 @@
     .home-action { min-height: 58px; padding: 8px 5px; border: 1px solid rgba(255,255,255,.78); border-radius: 17px; background: rgba(255,255,255,.52); box-shadow: 0 7px 18px rgba(116,79,83,.06); color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1.3; transition: transform .2s ease, background .2s ease; }
     .home-action:first-child { background: rgba(217,203,225,.45); }.home-action:nth-child(2) { background: rgba(242,221,161,.48); }.home-action:nth-child(3) { background: rgba(244,196,193,.47); }.home-action:active { transform: scale(.96); }
     .home-action-icon { display: block; margin-bottom: 4px; color: var(--ink); font-size: 20px; line-height: 1; }
-    .body-overview { position: relative; margin: 28px 0 8px; padding: 18px 15px 15px; overflow: hidden; border: 1px solid rgba(255,255,255,.8); border-radius: 27px 27px 21px 21px; background: rgba(255,252,249,.7); box-shadow: 0 15px 30px rgba(125,84,88,.08), inset 0 1px 0 rgba(255,255,255,.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    .body-overview::before { content: ""; position: absolute; top: -65px; right: -52px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(244,196,193,.36), transparent 68%); pointer-events: none; }
-    .body-overview-head { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .body-overview-kicker { display: block; color: #bf7977; font-size: 10px; font-weight: 800; letter-spacing: .11em; }
-    .body-overview h2 { margin: 4px 0 0; color: var(--ink); font-size: 20px; letter-spacing: -.06em; line-height: 1.1; }
-    .body-overview-head p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
-    .metric-refresh { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 35px; height: 35px; padding: 0; border: 1px solid rgba(176,128,130,.16); border-radius: 50%; background: rgba(255,255,255,.72); box-shadow: 0 5px 12px rgba(126,85,90,.07); color: #bd7b7a; cursor: pointer; font-size: 18px; line-height: 1; transition: transform .25s ease, background .25s ease; }
+    .body-overview { position: relative; margin: 12px 0 0; padding: 7px; overflow: hidden; border: 1px solid rgba(255,255,255,.8); border-radius: 24px; background: rgba(255,252,249,.7); box-shadow: 0 12px 24px rgba(125,84,88,.07), inset 0 1px 0 rgba(255,255,255,.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .body-overview::before { content: ""; position: absolute; top: -50px; right: -38px; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(244,196,193,.32), transparent 68%); pointer-events: none; }
+    .body-overview-head { position: absolute; z-index: 3; top: 7px; right: 7px; }
+    .body-overview-kicker, .body-overview h2, .body-overview-head p { display: none; }
+    .metric-refresh { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid rgba(176,128,130,.16); border-radius: 50%; background: rgba(255,255,255,.78); box-shadow: 0 4px 10px rgba(126,85,90,.07); color: #bd7b7a; cursor: pointer; font-size: 15px; line-height: 1; transition: transform .25s ease, background .25s ease; }
     .metric-refresh:hover { background: #fff; transform: rotate(24deg); }.metric-refresh:active { transform: scale(.9) rotate(112deg); }
-    .home-metric-card { position: relative; z-index: 1; display: block; width: 100%; margin-top: 15px; padding: 14px; border: 1px solid rgba(255,255,255,.88); border-radius: 22px; background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(250,239,235,.68)); box-shadow: inset 0 1px 0 rgba(255,255,255,.94); cursor: pointer; text-align: left; transition: transform .22s ease, box-shadow .22s ease, background .22s ease; }
+    .home-metric-card { position: relative; z-index: 1; display: block; width: 100%; margin: 0; padding: 8px; border: 1px solid rgba(255,255,255,.88); border-radius: 19px; background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(250,239,235,.68)); box-shadow: inset 0 1px 0 rgba(255,255,255,.94); cursor: pointer; text-align: left; transition: transform .22s ease, box-shadow .22s ease, background .22s ease; }
     .home-metric-card:hover { transform: translateY(-2px); background: rgba(255,255,255,.92); box-shadow: 0 10px 20px rgba(125,84,88,.09), inset 0 1px 0 rgba(255,255,255,.94); }.home-metric-card:active { transform: scale(.985); }
-    .home-metric-meta { display: flex; align-items: center; justify-content: space-between; gap: 9px; color: #94747b; font-size: 10px; line-height: 1.3; }
-    .home-metric-meta span:first-child { display: inline-flex; align-items: center; gap: 5px; color: #836970; font-weight: 700; }.home-metric-meta span:last-child { text-align: right; }
-    .home-metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 11px; }
-    .home-metric { min-height: 84px; padding: 10px; border: 1px solid rgba(255,255,255,.7); border-radius: 17px; background: rgba(255,255,255,.57); }
-    .home-metric:nth-child(1) { background: rgba(249,220,218,.58); }.home-metric:nth-child(2) { background: rgba(220,231,218,.59); }.home-metric:nth-child(3) { background: rgba(232,224,239,.62); }.home-metric:nth-child(4) { background: rgba(249,234,194,.58); }
-    .home-metric-top { display: flex; align-items: center; gap: 6px; color: #806970; font-size: 11px; }.home-metric-top b { font-size: 15px; font-weight: 400; line-height: 1; }
-    .home-metric strong { display: block; margin-top: 8px; color: var(--ink); font-size: 19px; letter-spacing: -.055em; line-height: 1; font-variant-numeric: tabular-nums; }.home-metric strong small { margin-left: 3px; color: #866e76; font-size: 10px; font-weight: 700; letter-spacing: 0; }
-    .home-metric em { display: block; margin-top: 5px; overflow: hidden; color: #987d83; font-size: 10px; font-style: normal; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+    .home-metric-meta { display: none; }
+    .home-metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+    .home-metric { min-width: 0; min-height: clamp(72px, 8.2dvh, 94px); padding: 10px 11px; border: 1px solid rgba(255,255,255,.7); border-radius: 15px; background: rgba(255,255,255,.57); }
+    .home-metric:nth-child(1) { background: rgba(249,220,218,.58); }.home-metric:nth-child(2) { background: rgba(220,231,218,.59); }.home-metric:nth-child(3) { background: rgba(232,224,239,.62); }.home-metric:nth-child(4) { background: rgba(249,234,194,.58); }.home-metric:nth-child(5) { background: rgba(250,223,194,.62); }.home-metric:nth-child(6) { background: rgba(207,231,225,.62); }
+    .home-metric-top { display: flex; align-items: center; gap: 5px; overflow: hidden; color: #806970; font-size: 11px; white-space: nowrap; }.home-metric-top b { font-size: 16px; font-weight: 400; line-height: 1; }
+    .home-metric strong { display: block; margin-top: 8px; overflow: hidden; color: var(--ink); font-size: clamp(17px, 2.1dvh, 21px); letter-spacing: -.055em; line-height: 1; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }.home-metric strong small { margin-left: 2px; color: #866e76; font-size: 10px; font-weight: 700; letter-spacing: 0; }
+    .home-metric em { display: block; margin-top: 6px; overflow: hidden; color: #987d83; font-size: 10px; font-style: normal; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
     .home-trend { position: relative; z-index: 1; display: block; margin-top: 11px; padding: 12px 12px 10px; border-radius: 18px; background: rgba(255,255,255,.48); }
     .home-trend-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }.home-trend-head strong { font-size: 12px; }.home-trend-head span { color: #9d8087; font-size: 10px; }
     .home-mini-bars { display: flex; align-items: end; height: 43px; gap: 5px; margin-top: 10px; }.home-mini-bar { position: relative; flex: 1; min-width: 10px; height: var(--metric-bar); border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #e3aea8, #f4d8b7); transform-origin: bottom; animation: metric-rise .52s cubic-bezier(.2,.85,.3,1) both; }.home-mini-bar:nth-child(2n) { background: linear-gradient(180deg, #b8cfb2, #e7e1be); }.home-mini-bar i { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); color: #a1858b; font-size: 9px; font-style: normal; }
@@ -392,7 +389,8 @@
     @keyframes mote { 0%,100% { transform: translateY(0); opacity: .44; } 50% { transform: translateY(-14px); opacity: .95; } }
     @keyframes toast-in { from { opacity: 0; transform: translate(-50%,-7px); } to { opacity: 1; transform: translate(-50%,0); } }
     @media (min-width: 431px) { body { background: radial-gradient(circle at 50% 17%, #fff8f5, #f0e2db 72%); }.app { box-shadow: 0 25px 65px rgba(118,78,85,.13); } }
-    @media (max-height: 720px) { .topbar { min-height: 50px; }.mascot-stage { height: 204px; }.waveform { height: 20px; margin-bottom: 6px; }.listen-button { min-height: 51px; }.home-actions { margin-top: 8px; }.body-overview { margin-top: 22px; } }
+    @media (max-height: 720px) { .topbar { min-height: 44px; }.mascot-stage { height: 170px; }.waveform { height: 20px; margin-bottom: 4px; }.listen-button { min-height: 48px; }.home-actions { margin-top: 6px; }.body-overview { margin-top: 8px; }.home-metric { min-height: 60px; padding: 7px 9px; }.home-metric-top { font-size: 10px; }.home-metric-top b { font-size: 14px; }.home-metric strong { margin-top: 5px; font-size: 16px; }.home-metric em { margin-top: 4px; font-size: 9px; } }
+    @media (max-height: 640px) { .home { padding-top: calc(5px + env(safe-area-inset-top)); padding-bottom: calc(78px + env(safe-area-inset-bottom)); }.topbar { min-height: 40px; }.quick-volunteer { min-height: 36px; padding: 0 12px; font-size: 12px; }.round-control { width: 36px; height: 36px; }.mascot-stage { height: 150px; }.mascot { width: min(48vw, 190px); }.waveform { display: none; }.listen-button { min-height: 44px; font-size: 15px; }.home-action { min-height: 43px; }.body-overview { margin-top: 6px; }.home-metric { min-height: 52px; padding: 5px 8px; }.home-metric-top { font-size: 9px; }.home-metric strong { margin-top: 4px; font-size: 15px; }.home-metric em { margin-top: 3px; font-size: 8px; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
     .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   </style>
@@ -430,18 +428,15 @@
         <div class="home-actions" aria-label="更多用户端功能">
           <button class="home-action" type="button" data-open="care"><span class="home-action-icon" aria-hidden="true">🫶</span>身体关怀</button>
           <button class="home-action" type="button" data-open="exercise"><span class="home-action-icon" aria-hidden="true">🧘</span>轻柔跟练</button>
-          <button class="home-action" type="button" data-open="community"><span class="home-action-icon" aria-hidden="true">👥</span>看看社区</button>
+            <button class="home-action" type="button" data-open="diary"><span class="home-action-icon" aria-hidden="true">📝</span>写日记</button>
         </div>
       </section>
-      <section class="body-overview" aria-labelledby="bodyOverviewTitle">
+      <section class="body-overview" aria-label="当前身体数据">
         <div class="body-overview-head">
-          <div><span class="body-overview-kicker">身体与节律</span><h2 id="bodyOverviewTitle">今天的身体指标</h2><p>刚刚同步</p></div>
           <button class="metric-refresh" id="refreshDemoMetrics" type="button" aria-label="刷新当前身体指标" title="刷新当前数据">↻</button>
         </div>
-        <button class="home-metric-card" id="homeMetricCard" type="button" data-open="device" aria-label="查看当前身体指标与趋势" aria-busy="true">
-          <span class="home-metric-meta"><span>✦ <span id="homeMetricScenario">正在同步当前数据</span></span><span id="homeMetricSource">刚刚更新</span></span>
+        <button class="home-metric-card" id="homeMetricCard" type="button" data-open="device" aria-label="查看当前身体指标" aria-busy="true">
           <span class="home-metric-grid" id="homeMetrics" aria-live="polite"></span>
-          <span class="home-trend"><span class="home-trend-head"><strong>近 7 天活动节律</strong><span id="homeTrendCaption">正在同步</span></span><span class="home-mini-bars" id="homeMetricTrend" aria-hidden="true"></span></span>
         </button>
       </section>
     </section>
@@ -496,7 +491,7 @@
     <section class="panel" id="devicePanel" data-panel="device" role="dialog" aria-modal="true" aria-labelledby="deviceTitle">
       <div class="panel-handle"></div>
       <header class="panel-head"><img class="panel-mascot" src="./assets/xiaopin-calm.png" alt="小频"><div><h2 id="deviceTitle">身体指标</h2><p>当前数据与近 7 天变化。</p></div><button class="close" type="button" data-close aria-label="关闭身体指标">×</button></header>
-      <div class="metric-grid" id="deviceMetrics"><div class="metric"><small>心率</small><strong>72 bpm</strong><span>刚刚同步</span></div><div class="metric"><small>HRV</small><strong>48 ms</strong><span>刚刚同步</span></div><div class="metric"><small>睡眠</small><strong>6h 42m</strong><span>昨夜记录</span></div><div class="metric"><small>活动</small><strong>4,820 步</strong><span>今天累计</span></div></div>
+      <div class="metric-grid" id="deviceMetrics"><div class="metric"><small>心率</small><strong>72 bpm</strong><span>刚刚同步</span></div><div class="metric"><small>HRV</small><strong>48 ms</strong><span>刚刚同步</span></div><div class="metric"><small>睡眠</small><strong>6h 42m</strong><span>昨夜记录</span></div><div class="metric"><small>活动</small><strong>4,820 步</strong><span>今天累计</span></div><div class="metric"><small>能量消耗</small><strong>860 kcal</strong><span>今天累计</span></div><div class="metric"><small>用药状态</small><strong>已服用</strong><span>08:00</span></div></div>
       <div class="trend-card"><div class="trend-head"><strong>近 7 天活动</strong><span>当前同步</span></div><div class="bars" aria-label="近七天活动趋势"><span class="bar" style="--bar:54px"><i>一</i></span><span class="bar" style="--bar:68px"><i>二</i></span><span class="bar" style="--bar:44px"><i>三</i></span><span class="bar" style="--bar:75px"><i>四</i></span><span class="bar" style="--bar:61px"><i>五</i></span><span class="bar" style="--bar:50px"><i>六</i></span><span class="bar" style="--bar:71px"><i>日</i></span></div><div class="quality-line"><span class="quality-dot"></span>已同步到当前设备</div></div>
       <div class="panel-actions"><button class="primary-action" type="button" data-open="care">看看今天的活动关怀</button><button class="secondary-action" type="button" data-close>返回首页</button></div>
     </section>
